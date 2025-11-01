@@ -78,7 +78,7 @@ export default function DashboardPage() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen pb-24 bg-background">
-      <div className="max-w-lg mx-auto">
+      <div className="max-w-md mx-auto">
         <Header user={user} />
         <BalanceCard balance={balance} />
         <QuickActions onTransferClick={() => setShowTransferModal(true)} />
