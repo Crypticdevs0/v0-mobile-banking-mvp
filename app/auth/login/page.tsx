@@ -37,7 +37,7 @@ export default function LoginPage() {
       localStorage.setItem("user", JSON.stringify(data.user))
       localStorage.setItem("userEmail", email)
 
-      router.push("/auth/otp-verification")
+      router.push("/dashboard")
     } catch (err: any) {
       setError(err.message)
     } finally {
