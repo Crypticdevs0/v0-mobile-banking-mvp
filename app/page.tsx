@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { CreditCard, ArrowRight, Check, Users, Zap, Shield, ChevronDown } from "lucide-react"
+import { CreditCard, ArrowRight, Check, Users, Zap, Shield, ChevronDown, Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export default function Landing() {
   const router = useRouter()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [activeTab, setActiveTab] = useState<string | null>(null)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem("authToken")
@@ -117,7 +118,7 @@ export default function Landing() {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50">
       {/* Navigation */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between relative">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -140,7 +141,8 @@ export default function Landing() {
               Support
             </a>
           </div>
-          <div className="flex items-center gap-3">
+          {/* Desktop auth/actions */}
+          <div className="hidden md:flex items-center gap-3">
             {isLoggedIn ? (
               <Button onClick={() => router.push("/dashboard")} className="bg-blue-600 hover:bg-blue-700">
                 Dashboard
@@ -156,6 +158,68 @@ export default function Landing() {
               </>
             )}
           </div>
+          {/* Mobile hamburger */}
+          <button
+            aria-label="Open menu"
+            className="md:hidden p-2 rounded-lg border border-slate-200 hover:bg-slate-50"
+            onClick={() => setMobileMenuOpen((v) => !v)}
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6 text-slate-900" /> : <Menu className="w-6 h-6 text-slate-900" />}
+          </button>
+
+          {/* Mobile menu panel */}
+          {mobileMenuOpen && (
+            <div className="md:hidden absolute right-4 top-full mt-2 w-64 bg-white border border-slate-200 rounded-xl shadow-lg p-4">
+              <div className="flex flex-col gap-3">
+                <a href="#accounts" className="px-2 py-2 rounded-lg hover:bg-slate-50 text-slate-700" onClick={() => setMobileMenuOpen(false)}>
+                  Accounts
+                </a>
+                <a href="#features" className="px-2 py-2 rounded-lg hover:bg-slate-50 text-slate-700" onClick={() => setMobileMenuOpen(false)}>
+                  Features
+                </a>
+                <a href="#faq" className="px-2 py-2 rounded-lg hover:bg-slate-50 text-slate-700" onClick={() => setMobileMenuOpen(false)}>
+                  FAQ
+                </a>
+                <a href="#support" className="px-2 py-2 rounded-lg hover:bg-slate-50 text-slate-700" onClick={() => setMobileMenuOpen(false)}>
+                  Support
+                </a>
+                <div className="border-t border-slate-200 my-2" />
+                {isLoggedIn ? (
+                  <Button
+                    onClick={() => {
+                      setMobileMenuOpen(false)
+                      router.push("/dashboard")
+                    }}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                  >
+                    Dashboard
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setMobileMenuOpen(false)
+                        router.push("/auth/login")
+                      }}
+                      className="w-full"
+                    >
+                      Sign In
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setMobileMenuOpen(false)
+                        router.push("/auth/signup")
+                      }}
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                    >
+                      Sign Up
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </nav>
 
