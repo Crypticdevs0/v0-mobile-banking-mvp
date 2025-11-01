@@ -399,7 +399,7 @@ export default function SignUpPage() {
             <CreditCard className="w-8 h-8 text-blue-600" />
             <span className="text-2xl font-bold text-slate-900">Premier America</span>
           </div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Create Your Account</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Create Your Account</h1>
           <p className="text-slate-600">
             Step {step + 1} of {steps.length}
           </p>
