@@ -44,7 +44,7 @@ export default function LoginPage() {
       localStorage.setItem("user", JSON.stringify(data.user))
       localStorage.setItem("userId", data.user.id)
 
-      router.push("/")
+      router.push("/dashboard")
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed")
     } finally {
