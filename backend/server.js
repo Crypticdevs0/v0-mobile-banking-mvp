@@ -16,48 +16,99 @@ import { verifyToken } from "./middleware/auth.ts"
 
 dotenv.config()
 
+// Enforce required environment variables
+const requiredEnv = ["JWT_SECRET", "FINERACT_URL", "FINERACT_USERNAME", "FINERACT_PASSWORD"]
+const missing = requiredEnv.filter((k) => !process.env[k])
+if (missing.length) {
+  console.error("Missing required environment variables:", missing.join(", "))
+  console.error("Aborting server start - please set the required environment variables and restart.")
+  process.exit(1)
+}
+
+// Build allowlist for CORS / sockets
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || process.env.CLIENT_URL || "http://localhost:3000")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean)
+
 const app = express()
 const httpServer = createServer(app)
+
+// Helmet for basic security headers and a sensible CSP
+app.use(helmet())
+app.use(helmet.contentSecurityPolicy({
+  directives: {
+    defaultSrc: ["'self'"],
+    scriptSrc: ["'self'", "'unsafe-inline'"],
+    connectSrc: ["'self'", ...allowedOrigins],
+    imgSrc: ["'self'", "data:"] ,
+    styleSrc: ["'self'", "'unsafe-inline'"],
+  },
+}))
+
+// Rate limiting for API abuse protection
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, // limit each IP to 200 requests per windowMs
+  standardHeaders: true,
+  legacyHeaders: false,
+})
+
+app.use(apiLimiter)
+app.use(cookieParser())
+
+// CSRF protection (expose token via /api/csrf-token for clients)
+const csrfProtection = csurf({ cookie: true })
+app.get('/api/csrf-token', csrfProtection, (req, res) => {
+  res.json({ csrfToken: req.csrfToken() })
+})
+
+// Socket.io setup with origin validation
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: allowedOrigins,
     credentials: true,
   },
+  transports: ["websocket"],
+})
+
+// Basic handshake origin check - reject unknown origins
+io.use((socket, next) => {
+  try {
+    const origin = socket.handshake.headers.origin
+    if (!origin || !allowedOrigins.includes(origin)) {
+      return next(new Error("Origin not allowed"))
+    }
+    next()
+  } catch (err) {
+    next(err)
+  }
 })
 
 const socketService = new SocketService(io)
 
 // Middleware
-app.use(cors())
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow non-browser requests like curl/server-to-server when origin is undefined
+    if (!origin) return callback(null, true)
+    if (allowedOrigins.includes(origin)) return callback(null, true)
+    return callback(new Error('CORS policy violation'))
+  },
+  credentials: true,
+}
+app.use(cors(corsOptions))
 app.use(express.json())
 
-// Logger middleware
+// Logger middleware (keep, do not expose sensitive data)
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`)
   next()
 })
 
 // Mount Supabase-backed auth routes (signup/login) and the OTP router
-import supabaseAuthRouter from "./routes/supabaseAuth.ts"
 app.use("/api/auth", supabaseAuthRouter)
 app.use("/api/auth", otpRouter)
-
-// ===== Auth Middleware =====
-const verifyToken = (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1]
-
-  if (!token) {
-    return res.status(401).json({ error: "No token provided" })
-  }
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "your-secret-key")
-    req.user = decoded
-    next()
-  } catch (error) {
-    res.status(401).json({ error: "Invalid token" })
-  }
-}
 
 // ===== Account Routes =====
 app.get("/api/accounts/balance", verifyToken, async (req, res) => {
