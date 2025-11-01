@@ -80,7 +80,7 @@ export default function LoginPage() {
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
-          className="card p-8"
+          className="card p-6 sm:p-8"
         >
           <h2 className="text-2xl font-bold mb-6">Welcome Back</h2>
 
