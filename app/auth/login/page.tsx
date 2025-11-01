@@ -46,9 +46,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 flex items-center justify-center px-4 py-8">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-md w-full">
-        <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
+        <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mb-6">
           {/* Header */}
           <motion.div
             initial={{ scale: 0.8 }}
@@ -60,7 +60,7 @@ export default function LoginPage() {
           </motion.div>
 
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-slate-900 mb-2">Welcome Back</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Welcome Back</h1>
             <p className="text-slate-600">Sign in to access your account</p>
           </div>
 

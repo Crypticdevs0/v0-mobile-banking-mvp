@@ -234,7 +234,7 @@ export default function Landing() {
             <span className="text-sm font-medium text-blue-700">Now Available in 50 States</span>
           </motion.div>
 
-          <motion.h1 variants={itemVariants} className="text-5xl md:text-6xl font-bold text-slate-900 leading-tight">
+          <motion.h1 variants={itemVariants} className="text-3xl sm:text-5xl md:text-6xl font-bold text-slate-900 leading-tight">
             Modern Banking
             <br />
             <span className="bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent">
@@ -242,7 +242,7 @@ export default function Landing() {
             </span>
           </motion.h1>
 
-          <motion.p variants={itemVariants} className="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
+          <motion.p variants={itemVariants} className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
             Experience banking that actually works. Zero fees, instant transfers, and support when you need it. Join
             over 500,000 customers already banking smarter.
           </motion.p>
@@ -279,7 +279,7 @@ export default function Landing() {
       <section id="accounts" className="bg-slate-900 text-white py-20 md:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">Choose Your Account</h2>
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-4">Choose Your Account</h2>
             <p className="text-xl text-slate-400">The right banking solution for every life stage</p>
           </motion.div>
 
@@ -322,7 +322,7 @@ export default function Landing() {
       {/* Features Section */}
       <section id="features" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">Why Choose Premier America?</h2>
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold text-slate-900 mb-4">Why Choose Premier America?</h2>
           <p className="text-xl text-slate-600">Everything you need for modern banking</p>
         </motion.div>
 
@@ -355,7 +355,7 @@ export default function Landing() {
       <section className="bg-slate-50 py-20 md:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">Loved by Thousands</h2>
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold text-slate-900 mb-4">Loved by Thousands</h2>
             <p className="text-xl text-slate-600">Join customers who've switched and never looked back</p>
           </motion.div>
 
@@ -430,7 +430,7 @@ export default function Landing() {
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            className="text-4xl md:text-5xl font-bold mb-6"
+            className="text-2xl sm:text-4xl md:text-5xl font-bold mb-6"
           >
             Ready to bank better?
           </motion.h2>
