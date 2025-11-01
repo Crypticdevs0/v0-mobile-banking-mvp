@@ -32,7 +32,7 @@ app.use((req, res, next) => {
 })
 
 // Mount Supabase-backed auth routes (signup/login) and the OTP router
-import supabaseAuthRouter from "./routes/supabaseAuth.js"
+import supabaseAuthRouter from "./routes/supabaseAuth.ts"
 app.use("/api/auth", supabaseAuthRouter)
 app.use("/api/auth", otpRouter)
 
