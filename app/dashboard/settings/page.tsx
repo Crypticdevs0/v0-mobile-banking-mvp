@@ -86,7 +86,7 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto px-4 py-8">
+      <div className="max-w-md mx-auto px-4 py-8">
         <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-8">
           {/* Profile Section */}
           <motion.div variants={itemVariants} className="card p-6">
