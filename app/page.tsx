@@ -234,7 +234,7 @@ export default function Landing() {
             <span className="text-sm font-medium text-blue-700">Now Available in 50 States</span>
           </motion.div>
 
-          <motion.h1 variants={itemVariants} className="text-5xl md:text-6xl font-bold text-slate-900 leading-tight">
+          <motion.h1 variants={itemVariants} className="text-3xl sm:text-5xl md:text-6xl font-bold text-slate-900 leading-tight">
             Modern Banking
             <br />
             <span className="bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent">
