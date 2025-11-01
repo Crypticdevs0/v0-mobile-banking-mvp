@@ -40,6 +40,19 @@ export const supabaseOperations = {
     return data
   },
 
+  async getUserProfileByEmail(email: string) {
+    const supabase = await createServerSupabaseClient()
+    const { data, error } = await supabase.from("users").select("*").eq("email", email).single()
+
+    if (error) {
+      // Return null if not found to allow calling code to handle missing user
+      if (error.code === "PGRST116" || error.message?.includes("No rows found")) return null
+      throw new Error(`Failed to fetch user profile by email: ${error.message}`)
+    }
+
+    return data
+  },
+
   // Account operations
   async createAccount(userId: string, fineractAccountId: string, balance: number, accountNumber: string) {
     const supabase = await createServerSupabaseClient()
