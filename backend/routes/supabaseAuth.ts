@@ -1,4 +1,5 @@
 import express from "express"
+import express from "express"
 import { createClient as createSupabase } from "@supabase/supabase-js"
 import jwt from "jsonwebtoken"
 import { fineractService } from "../services/fineractService.js"
@@ -63,18 +64,20 @@ router.post("/signup", async (req: any, res: any) => {
     // Create savings account
     const fineractAccount = await fineractService.createSavingsAccount(fineractClientId)
     const fineractAccountId = fineractAccount.resourceId
+    const fineractAccountNo = fineractAccount.accountNo || ""
 
     // Create user profile in Supabase
     await supabaseOperations.createUserProfile(userId, email, firstName, lastName, fineractClientId)
 
-    // Create account record
-    await supabaseOperations.createAccount(userId, fineractAccountId, 0, "")
+    // Create account record (persist account number from Fineract when available)
+    await supabaseOperations.createAccount(userId, fineractAccountId, 0, fineractAccountNo)
 
     // Get balance
     const balance = await fineractService.getAccountBalance(fineractAccountId)
 
     res.json({
       success: true,
+      token: authData.user?.id ? jwt.sign({ userId: userId, email, accountId: fineractAccountId }, process.env.JWT_SECRET || "your-secret-key", { expiresIn: "7d" }) : undefined,
       user: {
         id: userId,
         email,

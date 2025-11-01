@@ -1,5 +1,8 @@
 import express from "express"
 
+import express from "express"
+import { supabaseOperations } from "../../lib/supabase/supabaseService.js"
+
 const router = express.Router()
 
 // Mock OTP storage - in production use Redis or database
@@ -44,18 +47,29 @@ router.post("/verify-otp", async (req, res) => {
       return res.status(401).json({ error: "OTP expired" })
     }
 
-    // Generate account and routing numbers
-    const accountNumber = Math.random().toString().slice(2, 12)
-    const routingNumber = "021000021" // Fixed routing number
+    // Find the user via Supabase and return associated account info
+    try {
+      const userProfile = await supabaseOperations.getUserProfileByEmail(email)
+      if (!userProfile) {
+        // If user not yet persisted, fallback to a generated account number but warn
+        const fallbackAccount = Math.random().toString().slice(2, 12)
+        delete otpStore[email]
+        return res.json({ success: true, accountNumber: fallbackAccount, routingNumber: "021000021", message: "OTP verified, but no linked account found" })
+      }
 
-    delete otpStore[email]
+      const account = await supabaseOperations.getAccountByUserId(userProfile.id)
+      delete otpStore[email]
 
-    res.json({
-      success: true,
-      accountNumber,
-      routingNumber,
-      message: "OTP verified successfully",
-    })
+      // Prefer stored account_number (from Fineract), otherwise expose Fineract account id
+      const accountNumber = account.account_number || account.fineract_account_id || null
+      const routingNumber = process.env.DEFAULT_ROUTING_NUMBER || "021000021"
+
+      return res.json({ success: true, accountNumber, routingNumber, message: "OTP verified successfully" })
+    } catch (err) {
+      console.error("OTP verification - lookup error:", err)
+      delete otpStore[email]
+      return res.status(500).json({ error: "Verification succeeded but failed to look up account" })
+    }
   } catch (error) {
     res.status(500).json({ error: "Verification failed" })
   }
