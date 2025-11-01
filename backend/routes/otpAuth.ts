@@ -1,5 +1,8 @@
 import express from "express"
 
+import express from "express"
+import { supabaseOperations } from "../../lib/supabase/supabaseService.js"
+
 const router = express.Router()
 
 // Mock OTP storage - in production use Redis or database
