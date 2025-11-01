@@ -7,8 +7,6 @@ import { AnimatePresence, motion } from "framer-motion"
 export default function RouteTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [isTransitioning, setIsTransitioning] = useState(false)
-  const isFirst = typeof window === 'undefined' ? true : false
-  const { useRef } = require('react')
   const firstRef = useRef(true)
 
   useEffect(() => {
