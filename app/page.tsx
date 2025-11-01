@@ -322,7 +322,7 @@ export default function Landing() {
       {/* Features Section */}
       <section id="features" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">Why Choose Premier America?</h2>
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold text-slate-900 mb-4">Why Choose Premier America?</h2>
           <p className="text-xl text-slate-600">Everything you need for modern banking</p>
         </motion.div>
 
