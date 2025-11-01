@@ -96,7 +96,7 @@ export default function OTPVerificationPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 flex items-center justify-center px-4 py-12">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-md w-full">
-        <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
+        <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 text-center">
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="mb-6">
             <Mail className="w-16 h-16 text-blue-600 mx-auto" />
           </motion.div>
