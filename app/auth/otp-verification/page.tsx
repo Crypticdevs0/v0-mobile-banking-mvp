@@ -101,7 +101,7 @@ export default function OTPVerificationPage() {
             <Mail className="w-16 h-16 text-blue-600 mx-auto" />
           </motion.div>
 
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">Verify Your Email</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Verify Your Email</h1>
           <p className="text-slate-600 mb-8">We sent a 6-digit code to</p>
           <p className="font-semibold text-slate-900 mb-8 break-all">{userEmail}</p>
 
