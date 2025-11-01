@@ -242,7 +242,7 @@ export default function Landing() {
             </span>
           </motion.h1>
 
-          <motion.p variants={itemVariants} className="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
+          <motion.p variants={itemVariants} className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
             Experience banking that actually works. Zero fees, instant transfers, and support when you need it. Join
             over 500,000 customers already banking smarter.
           </motion.p>
