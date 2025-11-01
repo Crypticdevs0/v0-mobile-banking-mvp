@@ -71,7 +71,7 @@ export default function TransfersPage() {
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto px-4 py-8">
+      <div className="max-w-md mx-auto px-4 py-8">
         <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
           {step === 0 && (
             <>
