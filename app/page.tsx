@@ -279,7 +279,7 @@ export default function Landing() {
       <section id="accounts" className="bg-slate-900 text-white py-20 md:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">Choose Your Account</h2>
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-4">Choose Your Account</h2>
             <p className="text-xl text-slate-400">The right banking solution for every life stage</p>
           </motion.div>
 
