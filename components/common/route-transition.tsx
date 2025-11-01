@@ -7,15 +7,46 @@ import { AnimatePresence, motion } from "framer-motion"
 export default function RouteTransition({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [isTransitioning, setIsTransitioning] = useState(false)
+  const isFirst = typeof window === 'undefined' ? true : false
+  const { useRef } = require('react')
+  const firstRef = useRef(true)
 
   useEffect(() => {
+    // Ignore initial mount
+    if (firstRef.current) {
+      firstRef.current = false
+      return
+    }
     setIsTransitioning(true)
-    const id = window.setTimeout(() => setIsTransitioning(false), 500)
-    return () => window.clearTimeout(id)
   }, [pathname])
 
   return (
     <>
+      {/* Full screen overlay spinner during route change */}
+      <AnimatePresence initial={false}>
+        {isTransitioning && (
+          <motion.div
+            key="route-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35, ease: "easeInOut" }}
+            className="fixed inset-0 flex items-center justify-center bg-white/70 dark:bg-slate-900/70 backdrop-blur-sm z-[9999]"
+          >
+            <motion.div
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.85, opacity: 0 }}
+              transition={{ duration: 0.35, ease: "easeInOut" }}
+              className="flex flex-col items-center gap-4"
+            >
+              <div className="w-14 h-14 rounded-full border-4 border-blue-600 border-t-transparent animate-spin" />
+              <span className="text-sm text-slate-700 dark:text-slate-200">Loading...</span>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Top progress bar during route change */}
       <AnimatePresence initial={false}>
         {isTransitioning && (
@@ -37,7 +68,11 @@ export default function RouteTransition({ children }: { children: React.ReactNod
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.2, ease: "easeOut" }}
+          transition={{ duration: 0.25, ease: "easeOut" }}
+          onAnimationComplete={() => {
+            // hide overlay when the new page finished animating in
+            if (isTransitioning) setIsTransitioning(false)
+          }}
           className="min-h-screen"
         >
           {children}
