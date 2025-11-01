@@ -4,9 +4,15 @@ import { Server } from "socket.io"
 import cors from "cors"
 import jwt from "jsonwebtoken"
 import dotenv from "dotenv"
+import helmet from "helmet"
+import rateLimit from "express-rate-limit"
+import cookieParser from "cookie-parser"
+import csurf from "csurf"
 import { fineractService } from "./services/fineractService.js"
 import { SocketService } from "./services/socketService.js"
 import otpRouter from "./routes/otpAuth.ts"
+import supabaseAuthRouter from "./routes/supabaseAuth.ts"
+import { verifyToken } from "./middleware/auth.ts"
 
 dotenv.config()
 
