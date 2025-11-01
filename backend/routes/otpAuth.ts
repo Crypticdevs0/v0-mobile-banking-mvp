@@ -23,10 +23,15 @@ router.post("/send-otp", async (req, res) => {
       expires: Date.now() + 10 * 60 * 1000, // 10 minutes
     }
 
-    // In production: send via email service (SendGrid, Mailgun, etc.)
-    console.log(`[OTP] Sent to ${email}: ${otp}`)
-
-    res.json({ success: true, message: "OTP sent to email" })
+    // Send OTP via configured provider (if configured). Never log OTP values in production.
+    try {
+      await sendOtp(email, otp)
+      res.json({ success: true, message: "OTP sent to email" })
+    } catch (err) {
+      console.error('Failed to send OTP via provider:', err?.message || err)
+      // Keep behavior non-revealing to callers
+      res.status(500).json({ error: 'Failed to deliver OTP' })
+    }
   } catch (error) {
     res.status(500).json({ error: "Failed to send OTP" })
   }
