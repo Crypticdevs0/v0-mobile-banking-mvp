@@ -35,7 +35,7 @@ export default function CardsPage() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <div className="max-w-lg mx-auto px-4 py-6 border-b border-border">
+      <div className="max-w-md mx-auto px-4 py-6 border-b border-border">
         <div className="flex items-center gap-4">
           <Link href="/dashboard">
             <ArrowLeft className="w-6 h-6 text-foreground cursor-pointer hover:opacity-70" />
@@ -46,7 +46,7 @@ export default function CardsPage() {
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto px-4 py-8">
+      <div className="max-w-md mx-auto px-4 py-8">
         <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
           {/* Card Display */}
           <motion.div
@@ -71,7 +71,7 @@ export default function CardsPage() {
                     {showCardNumber ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
                   </button>
                   <p className="text-lg font-mono tracking-wider">
-                    {showCardNumber ? virtualCard.number : "●●●● ●●●● ●●●● ●●●●"}
+                    {showCardNumber ? virtualCard.number : "●●●● ●●●● ●●●● ●●●��"}
                   </p>
                 </div>
 
