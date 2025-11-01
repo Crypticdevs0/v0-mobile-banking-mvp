@@ -127,9 +127,13 @@ router.post("/resend-otp", async (req, res) => {
       expires: Date.now() + 10 * 60 * 1000,
     }
 
-    console.log(`[OTP] Resent to ${email}: ${otp}`)
-
-    res.json({ success: true, message: "OTP resent" })
+    try {
+      await sendOtp(email, otp)
+      res.json({ success: true, message: "OTP resent" })
+    } catch (err) {
+      console.error('Failed to resend OTP via provider:', err?.message || err)
+      res.status(500).json({ error: 'Failed to resend OTP' })
+    }
   } catch (error) {
     res.status(500).json({ error: "Failed to resend OTP" })
   }
