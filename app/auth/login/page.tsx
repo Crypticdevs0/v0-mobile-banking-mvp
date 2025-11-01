@@ -60,7 +60,7 @@ export default function LoginPage() {
           </motion.div>
 
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-slate-900 mb-2">Welcome Back</h1>
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Welcome Back</h1>
             <p className="text-slate-600">Sign in to access your account</p>
           </div>
 
