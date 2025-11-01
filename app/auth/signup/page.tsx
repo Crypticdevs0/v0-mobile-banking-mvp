@@ -423,7 +423,7 @@ export default function SignUpPage() {
         </div>
 
         {/* Form Content */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
+        <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mb-6">
           <AnimatePresence mode="wait">{renderStep()}</AnimatePresence>
 
           {/* Error Message */}
