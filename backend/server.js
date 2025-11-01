@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken"
 import dotenv from "dotenv"
 import { fineractService } from "./services/fineractService.js"
 import { SocketService } from "./services/socketService.js"
+import otpRouter from "./routes/otpAuth.ts"
 
 dotenv.config()
 
@@ -29,6 +30,8 @@ app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`)
   next()
 })
+
+app.use("/api/auth", otpRouter)
 
 // ===== ===== Routes =====
 app.post("/api/auth/signup", async (req, res) => {

@@ -191,27 +191,31 @@
 
 @layer components {
   .card {
-    @apply bg-surface rounded-lg border border-border shadow-sm hover:shadow-md transition-shadow;
+    @apply bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow duration-300 ease-in-out;
   }
 
   .btn-primary {
-    @apply px-4 py-2 rounded-lg bg-primary text-white font-semibold hover:bg-primary-dark transition-colors;
+    @apply px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition-colors;
   }
 
   .btn-secondary {
-    @apply px-4 py-2 rounded-lg bg-surface border border-border text-foreground hover:bg-surface-hover transition-colors;
+    @apply px-4 py-2 rounded-lg bg-white border border-slate-300 text-slate-900 hover:bg-slate-50 transition-colors;
   }
 
-  .gradient-primary {
-    @apply bg-gradient-to-br from-primary via-primary-light to-accent-teal;
+  .input-field {
+    @apply w-full px-4 py-2 rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition;
   }
 
   .glass-effect {
-    @apply bg-white/80 backdrop-blur-md border border-white/20;
+    @apply bg-white/80 backdrop-blur-lg border border-white/20;
   }
 
-  .shimmer {
-    @apply bg-gradient-to-r from-surface via-surface-hover to-surface animate-pulse;
+  .gradient-primary {
+    @apply bg-gradient-to-br from-blue-600 via-blue-500 to-teal-500;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent;
   }
 }
 
