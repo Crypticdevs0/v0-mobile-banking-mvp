@@ -1,9 +1,45 @@
 import express from "express"
 
 import express from "express"
+import rateLimit from "express-rate-limit"
 import { supabaseOperations } from "../../lib/supabase/supabaseService.js"
 
 const router = express.Router()
+
+// Rate limiters
+const sendOtpLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 5, message: { error: 'Too many OTP requests, try again later' } })
+const verifyOtpLimiter = rateLimit({ windowMs: 60 * 60 * 1000, max: 20, message: { error: 'Too many attempts, try again later' } })
+
+async function sendOtp(email: string, otp: string) {
+  const sendgridKey = process.env.SENDGRID_API_KEY
+  const sendFrom = process.env.SENDGRID_FROM || process.env.SENDGRID_FROM_EMAIL
+  if (sendgridKey && sendFrom) {
+    const payload = {
+      personalizations: [{ to: [{ email }], subject: 'Your OTP Code' }],
+      from: { email: sendFrom },
+      content: [{ type: 'text/plain', value: `Your verification code is: ${otp}` }],
+    }
+
+    const res = await fetch('https://api.sendgrid.com/v3/mail/send', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${sendgridKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    })
+
+    if (!res.ok) {
+      const text = await res.text()
+      throw new Error(`SendGrid error: ${res.status} ${text}`)
+    }
+
+    return true
+  }
+
+  // No provider configured: do not log the OTP. Keep server-side storage for verification.
+  return true
+}
 
 // Mock OTP storage - in production use Redis or database
 const otpStore: { [key: string]: { code: string; expires: number } } = {}
