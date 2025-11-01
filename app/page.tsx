@@ -430,7 +430,7 @@ export default function Landing() {
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            className="text-4xl md:text-5xl font-bold mb-6"
+            className="text-2xl sm:text-4xl md:text-5xl font-bold mb-6"
           >
             Ready to bank better?
           </motion.h2>
