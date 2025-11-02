@@ -20,12 +20,16 @@ export default function DepositsPage() {
     if (!amount) return
     setLoading(true)
     try {
-      const token = localStorage.getItem("authToken")
+      const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' })
+      if (!csrfRes.ok) throw new Error('Failed to obtain CSRF token')
+      const csrfData = await csrfRes.json()
+
       const response = await fetch("/api/deposits", {
         method: "POST",
+        credentials: 'include',
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          "x-csrf-token": csrfData.csrfToken,
         },
         body: JSON.stringify({ amount: Number.parseFloat(amount), method }),
       })
