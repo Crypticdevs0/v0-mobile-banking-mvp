@@ -17,8 +17,9 @@ async function main() {
 
   try {
     console.log('Listing existing users...')
-    const { data: existingUsers } = await supabase.auth.admin.listUsers({ perPage: 100 })
-    const existingEmails = new Set((existingUsers || []).map(u => u.email))
+    const { data: listData } = await supabase.auth.admin.listUsers({ perPage: 100 })
+    const existingUsers = listData?.users || []
+    const existingEmails = new Set(existingUsers.map(u => u.email))
 
     const demoUsers = [
       { email: 'alice@bank.com', password: 'password123', first_name: 'Alice', last_name: 'Anderson' },
@@ -30,8 +31,8 @@ async function main() {
     for (const u of demoUsers) {
       if (existingEmails.has(u.email)) {
         console.log(`User ${u.email} exists, fetching user id...`)
-        const { data } = await supabase.auth.admin.listUsers({ perPage: 100 })
-        const found = (data || []).find(x => x.email === u.email)
+        const { data: listData2 } = await supabase.auth.admin.listUsers({ perPage: 100 })
+        const found = (listData2?.users || []).find(x => x.email === u.email)
         if (found) createdUsers.push(found)
         continue
       }
