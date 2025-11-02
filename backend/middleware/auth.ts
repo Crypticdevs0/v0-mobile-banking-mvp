@@ -6,7 +6,12 @@ dotenv.config()
 
 export function verifyToken(req: any, res: any, next: any) {
   const authHeader = req.headers.authorization || ''
-  const token = authHeader.split(' ')[1]
+  let token = authHeader.split(' ')[1]
+
+  // If no Authorization header, fall back to cookie token (HttpOnly)
+  if (!token && req.cookies) {
+    token = req.cookies.auth_token
+  }
 
   if (!token) {
     return res.status(401).json({ error: 'No token provided' })
