@@ -70,7 +70,7 @@ export default function SettingsPage() {
     try {
       await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
     } catch (err) {
-      console.error('Logout request failed', err)
+      logger.error('Logout request failed', err)
     }
     router.push('/auth/login')
   }
