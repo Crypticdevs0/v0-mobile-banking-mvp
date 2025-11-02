@@ -31,10 +31,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchBalance = async () => {
       try {
-        const token = localStorage.getItem("authToken")
-        const response = await fetch("/api/accounts/balance", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+        const response = await fetch("/api/accounts/balance", { credentials: 'include' })
         const data = await response.json()
         setBalance(data.balance)
       } catch (error) {

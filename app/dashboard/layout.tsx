@@ -11,13 +11,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [authed, setAuthed] = useState(false)
 
   useEffect(() => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null
-    const ok = !!token
-    setAuthed(ok)
-    setChecking(false)
-    if (!ok) {
-      router.replace("/auth/login")
-    }
+    let mounted = true
+    ;(async () => {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' })
+        if (!mounted) return
+        if (!res.ok) {
+          setAuthed(false)
+          router.replace('/auth/login')
+          return
+        }
+        setAuthed(true)
+      } catch (err) {
+        console.error('Auth check failed', err)
+        setAuthed(false)
+        router.replace('/auth/login')
+      } finally {
+        if (mounted) setChecking(false)
+      }
+    })()
+
+    return () => { mounted = false }
   }, [router])
 
   if (checking) {

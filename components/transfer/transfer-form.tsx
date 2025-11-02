@@ -38,13 +38,18 @@ export default function TransferForm({ onSuccess }: { onSuccess: (amount: number
   const handleTransfer = async () => {
     try {
       setLoading(true)
-      const token = localStorage.getItem("authToken")
+
+      // Obtain CSRF token
+      const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' })
+      if (!csrfRes.ok) throw new Error('Failed to obtain CSRF token')
+      const csrfData = await csrfRes.json()
 
       const response = await fetch("/api/transfers", {
         method: "POST",
+        credentials: 'include',
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          "x-csrf-token": csrfData.csrfToken,
         },
         body: JSON.stringify({
           recipientAccountId: selectedRecipient?.accountId,
