@@ -66,10 +66,13 @@ export default function SettingsPage() {
     }
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem("authToken")
-    localStorage.removeItem("user")
-    router.push("/auth/login")
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+    } catch (err) {
+      console.error('Logout request failed', err)
+    }
+    router.push('/auth/login')
   }
 
   const containerVariants = {
