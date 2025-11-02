@@ -138,25 +138,7 @@ export default function LoginPage() {
             </motion.button>
           </form>
 
-          {/* Demo Credentials */}
-          <div className="mt-6 pt-6 border-t border-border">
-            <p className="text-xs text-foreground-secondary text-center mb-3">Demo Credentials:</p>
-            <div className="space-y-2">
-              {DEMO_CREDENTIALS.map(({ email, password }) => (
-                <motion.button
-                  key={email}
-                  whileHover={{ scale: 1.02 }}
-                  onClick={() => {
-                    setEmail(email)
-                    setPassword(password)
-                  }}
-                  className="w-full text-xs p-2 text-primary hover:bg-surface-hover rounded-lg transition-colors"
-                >
-                  {email}
-                </motion.button>
-              ))}
-            </div>
-          </div>
+          {/* Demo credentials removed for security */}
         </motion.div>
 
         {/* Footer */}
