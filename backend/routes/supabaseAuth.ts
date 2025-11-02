@@ -6,6 +6,7 @@ import { fineractService } from "../services/fineractService.js"
 import { supabaseOperations } from "../../lib/supabase/supabaseService.js"
 
 const router = express.Router()
+import logger from '../logger.js'
 
 // Initialize Supabase client for backend operations
 const supabase = createSupabase(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
@@ -110,7 +111,7 @@ router.post("/signup", async (req: any, res: any) => {
       },
     })
   } catch (error: any) {
-    console.error("Signup error:", error)
+    logger.error("Signup error:", error)
     res.status(500).json({ error: error.message || "Signup failed" })
   }
 })
@@ -174,7 +175,7 @@ router.post("/login", async (req: any, res: any) => {
       },
     })
   } catch (error: any) {
-    console.error("Login error:", error)
+    logger.error("Login error:", error)
     res.status(500).json({ error: error.message || "Login failed" })
   }
 })
@@ -185,7 +186,7 @@ router.post("/logout", async (req: any, res: any) => {
     res.clearCookie("auth_token", { path: "/" })
     res.json({ success: true })
   } catch (error: any) {
-    console.error("Logout error:", error)
+    logger.error("Logout error:", error)
     res.status(500).json({ error: "Logout failed" })
   }
 })
@@ -217,7 +218,7 @@ router.get("/me", async (req: any, res: any) => {
       account: account || null,
     })
   } catch (error: any) {
-    console.error("Me endpoint error:", error)
+    logger.error("Me endpoint error:", error)
     res.status(500).json({ error: "Failed to fetch user" })
   }
 })
@@ -237,7 +238,7 @@ router.post("/sync-balance", verifySupabaseToken, async (req: any, res: any) => 
       currency: balance.currency,
     })
   } catch (error: any) {
-    console.error("Sync balance error:", error)
+    logger.error("Sync balance error:", error)
     res.status(500).json({ error: error.message || "Failed to sync balance" })
   }
 })
