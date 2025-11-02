@@ -1,4 +1,3 @@
-import express from "express"
 import { createServer } from "http"
 import { Server } from "socket.io"
 import cors from "cors"
@@ -14,6 +13,7 @@ import { SocketService } from "./services/socketService.js"
 import otpRouter from "./routes/otpAuth.ts"
 import supabaseAuthRouter from "./routes/supabaseAuth.ts"
 import { verifyToken } from "./middleware/auth.ts"
+import express from "express"
 
 dotenv.config()
 
@@ -65,7 +65,8 @@ app.get('/api/csrf-token', csrfProtection, (req, res) => {
 })
 
 // Socket.io setup with origin validation
-const SOCKET_PATH = process.env.SOCKET_PATH || "/socket.io"
+// Prefer NEXT_PUBLIC_SOCKET_PATH for alignment with frontend/env exposure
+const SOCKET_PATH = process.env.NEXT_PUBLIC_SOCKET_PATH || process.env.SOCKET_PATH || "/socket.io"
 const io = new Server(httpServer, {
   path: SOCKET_PATH,
   cors: {
@@ -112,6 +113,15 @@ app.use((req, res, next) => {
 // Mount Supabase-backed auth routes (signup/login) and the OTP router with CSRF protection
 app.use("/api/auth", csrfProtection, supabaseAuthRouter)
 app.use("/api/auth", csrfProtection, otpRouter)
+// Mount deposits router to handle POST /api/deposits if present
+try {
+  // require optional router only if file exists
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const depositsRouter = require("./routes/deposits.ts").default
+  app.use("/api", csrfProtection, depositsRouter)
+} catch (e) {
+  logger.info('No deposits router found, skipping mount')
+}
 
 // ===== Account Routes =====
 app.get("/api/accounts/balance", verifyToken, async (req, res) => {
@@ -149,7 +159,6 @@ app.post("/api/transfers", verifyToken, async (req, res) => {
 
     const transfer = await fineractService.transferFunds(req.user.accountId, recipientAccountId, amount)
 
-    // Emit transfer completion to sender
     socketService.emitTransferSent(req.user.userId, {
       id: transfer.transactionId,
       toAccountId: recipientAccountId,
@@ -158,8 +167,6 @@ app.post("/api/transfers", verifyToken, async (req, res) => {
       status: "completed",
     })
 
-    // Emit transfer received notification to recipient (demo: hardcoded userId mapping)
-    // In production, query database to find recipient's userId from accountId
     const recipientUserIdMap = {
       1: 1,
       2: 2,
@@ -176,7 +183,6 @@ app.post("/api/transfers", verifyToken, async (req, res) => {
         status: "completed",
       })
 
-      // Update recipient's balance in real-time
       try {
         const recipientBalance = await fineractService.getAccountBalance(recipientAccountId)
         socketService.emitBalanceUpdate(recipientUserId, recipientBalance.balance, recipientAccountId)
@@ -185,7 +191,6 @@ app.post("/api/transfers", verifyToken, async (req, res) => {
       }
     }
 
-    // Update sender's balance
     try {
       const senderBalance = await fineractService.getAccountBalance(req.user.accountId)
       socketService.emitBalanceUpdate(req.user.userId, senderBalance.balance, req.user.accountId)
@@ -208,7 +213,6 @@ app.get("/api/transactions", verifyToken, async (req, res) => {
   try {
     const transactions = await fineractService.getAccountTransactions(req.user.accountId)
 
-    // Transform Fineract transaction format to app format
     const formattedTransactions = (transactions.transactionItems || []).map((tx) => ({
       id: tx.id,
       type: tx.type?.value === "DEPOSIT" ? "received" : "sent",
@@ -265,7 +269,6 @@ io.on("connection", (socket) => {
   })
 
   socket.on("disconnect", () => {
-    // Try to find userId from user data if available
     const userId = socket.handshake.auth?.userId
     if (userId) {
       socketService.unregisterUser(socket.id, userId)
@@ -288,5 +291,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 4000
 httpServer.listen(PORT, () => {
   logger.info(`Banking server running on port ${PORT}`)
-  logger.info(`Socket.io listening for connections`)
+  logger.info(`Socket.io listening for connections at path ${SOCKET_PATH}`)
 })
