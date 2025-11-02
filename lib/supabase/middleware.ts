@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { createServerClient } from "@supabase/supabase-js" // Declare the createServerClient variable
+import { NextRequest, NextResponse } from "next/server"
+import { createServerClient } from "@supabase/ssr"
 
 export async function handleSessionUpdate(request: NextRequest) {
   const res = NextResponse.next({
