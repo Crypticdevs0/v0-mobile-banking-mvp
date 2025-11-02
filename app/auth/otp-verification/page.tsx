@@ -61,8 +61,6 @@ export default function OTPVerificationPage() {
       if (!response.ok) throw new Error(data.error || "Verification failed")
 
       setVerified(true)
-      localStorage.setItem("accountNumber", data.accountNumber)
-      localStorage.setItem("routingNumber", data.routingNumber)
 
       setTimeout(() => {
         router.push("/dashboard")
