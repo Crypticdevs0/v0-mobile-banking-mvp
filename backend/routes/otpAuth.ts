@@ -3,6 +3,7 @@ import express from "express"
 import express from "express"
 import rateLimit from "express-rate-limit"
 import { supabaseOperations } from "../../lib/supabase/supabaseService.js"
+import logger from '../logger.js'
 
 const router = express.Router()
 
@@ -64,7 +65,7 @@ router.post("/send-otp", sendOtpLimiter, async (req, res) => {
       await sendOtp(email, otp)
       res.json({ success: true, message: "OTP sent to email" })
     } catch (err) {
-      console.error('Failed to send OTP via provider:', err?.message || err)
+      logger.error('Failed to send OTP via provider:', err?.message || err)
       // Keep behavior non-revealing to callers
       res.status(500).json({ error: 'Failed to deliver OTP' })
     }
@@ -107,7 +108,7 @@ router.post("/verify-otp", verifyOtpLimiter, async (req, res) => {
 
       return res.json({ success: true, accountNumber, routingNumber, message: "OTP verified successfully" })
     } catch (err) {
-      console.error("OTP verification - lookup error:", err)
+      logger.error("OTP verification - lookup error:", err)
       delete otpStore[email]
       return res.status(500).json({ error: "Verification succeeded but failed to look up account" })
     }
@@ -131,7 +132,7 @@ router.post("/resend-otp", async (req, res) => {
       await sendOtp(email, otp)
       res.json({ success: true, message: "OTP resent" })
     } catch (err) {
-      console.error('Failed to resend OTP via provider:', err?.message || err)
+      logger.error('Failed to resend OTP via provider:', err?.message || err)
       res.status(500).json({ error: 'Failed to resend OTP' })
     }
   } catch (error) {

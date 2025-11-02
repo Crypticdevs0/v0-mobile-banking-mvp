@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Send, ArrowLeft } from "lucide-react"
+import logger from '@/lib/logger'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
@@ -46,6 +47,7 @@ export default function TransfersPage() {
       setStep(3)
       setTimeout(() => router.push("/dashboard"), 3000)
     } catch (err: any) {
+      logger.error(err)
       setError(err.message)
     } finally {
       setLoading(false)

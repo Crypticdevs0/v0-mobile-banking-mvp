@@ -2,6 +2,7 @@ import express from "express"
 import { createServer } from "http"
 import { Server } from "socket.io"
 import cors from "cors"
+import logger from "./logger.js"
 import jwt from "jsonwebtoken"
 import dotenv from "dotenv"
 import helmet from "helmet"
@@ -102,7 +103,7 @@ app.use(express.json())
 
 // Logger middleware (keep, do not expose sensitive data)
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`)
+  logger.info(`[${new Date().toISOString()}] ${req.method} ${req.path}`)
   next()
 })
 
@@ -121,7 +122,7 @@ app.get("/api/accounts/balance", verifyToken, async (req, res) => {
       ...balance,
     })
   } catch (error) {
-    console.error("Error fetching balance:", error)
+    logger.error("Error fetching balance:", error)
     res.status(500).json({ error: "Failed to fetch balance" })
   }
 })
@@ -178,7 +179,7 @@ app.post("/api/transfers", verifyToken, async (req, res) => {
         const recipientBalance = await fineractService.getAccountBalance(recipientAccountId)
         socketService.emitBalanceUpdate(recipientUserId, recipientBalance.balance, recipientAccountId)
       } catch (error) {
-        console.error("Error fetching recipient balance:", error)
+        logger.error("Error fetching recipient balance:", error)
       }
     }
 
@@ -187,7 +188,7 @@ app.post("/api/transfers", verifyToken, async (req, res) => {
       const senderBalance = await fineractService.getAccountBalance(req.user.accountId)
       socketService.emitBalanceUpdate(req.user.userId, senderBalance.balance, req.user.accountId)
     } catch (error) {
-      console.error("Error fetching sender balance:", error)
+      logger.error("Error fetching sender balance:", error)
     }
 
     res.json({
@@ -195,7 +196,7 @@ app.post("/api/transfers", verifyToken, async (req, res) => {
       transfer,
     })
   } catch (error) {
-    console.error("Transfer error:", error)
+    logger.error("Transfer error:", error)
     res.status(500).json({ error: error.message || "Transfer failed" })
   }
 })
@@ -223,14 +224,14 @@ app.get("/api/transactions", verifyToken, async (req, res) => {
       },
     })
   } catch (error) {
-    console.error("Error fetching transactions:", error)
+    logger.error("Error fetching transactions:", error)
     res.status(500).json({ error: "Failed to fetch transactions" })
   }
 })
 
 // ===== Socket.io Events =====
 io.on("connection", (socket) => {
-  console.log(`[Socket] New connection: ${socket.id}`)
+  logger.info(`[Socket] New connection: ${socket.id}`)
 
   socket.on("user:login", (userId) => {
     socketService.registerUser(socket.id, userId)
@@ -243,12 +244,12 @@ io.on("connection", (socket) => {
 
   socket.on("subscribe:balance", (userId) => {
     socket.join(`balance:${userId}`)
-    console.log(`[Socket] User ${userId} subscribed to balance updates`)
+    logger.info(`[Socket] User ${userId} subscribed to balance updates`)
   })
 
   socket.on("subscribe:notifications", (userId) => {
     socket.join(`notifications:${userId}`)
-    console.log(`[Socket] User ${userId} subscribed to notifications`)
+    logger.info(`[Socket] User ${userId} subscribed to notifications`)
   })
 
   socket.on("request:balance", async (userId, accountId) => {
@@ -256,7 +257,7 @@ io.on("connection", (socket) => {
       const balance = await fineractService.getAccountBalance(accountId)
       socketService.emitBalanceUpdate(userId, balance.balance, accountId)
     } catch (error) {
-      console.error("Error fetching balance for socket:", error)
+      logger.error("Error fetching balance for socket:", error)
       socket.emit("error:balance", { error: "Failed to fetch balance" })
     }
   })
@@ -267,7 +268,7 @@ io.on("connection", (socket) => {
     if (userId) {
       socketService.unregisterUser(socket.id, userId)
     }
-    console.log(`[Socket] User disconnected: ${socket.id}`)
+    logger.info(`[Socket] User disconnected: ${socket.id}`)
   })
 })
 
@@ -278,7 +279,7 @@ app.get("/api/health", (req, res) => {
 
 // Error handling
 app.use((err, req, res, next) => {
-  console.error(err)
+  logger.error(err)
   res.status(500).json({ error: "Internal server error" })
 })
 

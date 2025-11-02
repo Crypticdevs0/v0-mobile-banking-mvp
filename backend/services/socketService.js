@@ -1,6 +1,8 @@
 // Socket.io Event Service - Manages real-time communication
 // Handles balance updates, transfer notifications, and user subscriptions
 
+import logger from '../logger.js'
+
 export class SocketService {
   constructor(io) {
     this.io = io
@@ -16,7 +18,7 @@ export class SocketService {
     if (!sockets.includes(socketId)) {
       sockets.push(socketId)
     }
-    console.log(`[Socket] User ${userId} connected with socket ${socketId}`)
+    logger.info(`[Socket] User ${userId} connected with socket ${socketId}`)
   }
 
   // Unregister a user connection
@@ -31,7 +33,7 @@ export class SocketService {
         this.userSockets.delete(userId)
       }
     }
-    console.log(`[Socket] User ${userId} disconnected`)
+    logger.info(`[Socket] User ${userId} disconnected`)
   }
 
   // Check if user is online
@@ -47,7 +49,7 @@ export class SocketService {
       balance,
       timestamp: new Date(),
     })
-    console.log(`[Socket] Balance updated for user ${userId}: ${balance}`)
+    logger.info(`[Socket] Balance updated for user ${userId}: ${balance}`)
   }
 
   // Emit transfer completion to sender
@@ -57,7 +59,7 @@ export class SocketService {
       type: "sent",
       timestamp: new Date(),
     })
-    console.log(`[Socket] Transfer sent notification to user ${userId}`)
+    logger.info(`[Socket] Transfer sent notification to user ${userId}`)
   }
 
   // Emit transfer received to recipient
@@ -67,7 +69,7 @@ export class SocketService {
       type: "received",
       timestamp: new Date(),
     })
-    console.log(`[Socket] Transfer received notification to user ${userId}`)
+    logger.info(`[Socket] Transfer received notification to user ${userId}`)
   }
 
   // Emit account activity notification

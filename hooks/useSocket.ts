@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useCallback } from "react"
 import io, { type Socket } from "socket.io-client"
+import logger from '@/lib/logger'
 
 export function useSocket() {
   const socketRef = useRef<Socket | null>(null)
@@ -17,7 +18,7 @@ export function useSocket() {
           userId = data.user?.id || null
         }
       } catch (err) {
-        console.error('Failed to fetch user for socket auth', err)
+        logger.error('Failed to fetch user for socket auth', err)
       }
 
       socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001", {
@@ -29,7 +30,7 @@ export function useSocket() {
       })
 
       socketRef.current.on("connect", () => {
-        console.log("[Socket] Connected:", socketRef.current?.id)
+        logger.info("[Socket] Connected:", socketRef.current?.id)
         if (userId) {
           socketRef.current?.emit("user:login", userId)
           socketRef.current?.emit("subscribe:balance", userId)
@@ -38,15 +39,15 @@ export function useSocket() {
       })
 
       socketRef.current.on("connect_error", (error) => {
-        console.error("[Socket] Connection error:", error)
+        logger.error("[Socket] Connection error:", error)
       })
 
       socketRef.current.on("disconnect", (reason) => {
-        console.log("[Socket] Disconnected:", reason)
+        logger.info("[Socket] Disconnected:", reason)
       })
 
       socketRef.current.on("error", (error) => {
-        console.error("[Socket] Error event:", error)
+        logger.error("[Socket] Error event:", error)
       })
     }
   }, [])

@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Download, ArrowLeft, Upload } from "lucide-react"
+import logger from '@/lib/logger'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -38,7 +39,7 @@ export default function DepositsPage() {
       setSuccess(true)
       setTimeout(() => router.push("/dashboard"), 2000)
     } catch (err: any) {
-      console.error(err)
+      logger.error(err)
     } finally {
       setLoading(false)
     }

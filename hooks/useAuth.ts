@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import logger from '@/lib/logger'
 
 interface User {
   id: string | number
@@ -39,7 +40,7 @@ export function useAuth() {
           setUser(null)
         }
       } catch (err) {
-        console.error('Failed to fetch current user', err)
+        logger.error('Failed to fetch current user', err)
         setUser(null)
       } finally {
         if (mounted) setLoading(false)
@@ -55,7 +56,7 @@ export function useAuth() {
     try {
       await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
     } catch (err) {
-      console.error('Logout request failed', err)
+      logger.error('Logout request failed', err)
     }
     setUser(null)
   }

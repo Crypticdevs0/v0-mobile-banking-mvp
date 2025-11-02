@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken"
 import jwt from "jsonwebtoken"
 import dotenv from "dotenv"
+import logger from '../logger.js'
 
 dotenv.config()
 
@@ -19,7 +20,7 @@ export function verifyToken(req: any, res: any, next: any) {
 
   const secret = process.env.JWT_SECRET
   if (!secret) {
-    console.error('JWT_SECRET is not configured')
+    logger.error('JWT_SECRET is not configured')
     return res.status(500).json({ error: 'Server misconfiguration' })
   }
 

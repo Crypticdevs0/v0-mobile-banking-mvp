@@ -4,6 +4,7 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
+import logger from '@/lib/logger'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -23,7 +24,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }
         setAuthed(true)
       } catch (err) {
-        console.error('Auth check failed', err)
+        logger.error('Auth check failed', err)
         setAuthed(false)
         router.replace('/auth/login')
       } finally {

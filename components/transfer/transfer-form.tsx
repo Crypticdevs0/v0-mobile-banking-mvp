@@ -70,7 +70,7 @@ export default function TransferForm({ onSuccess }: { onSuccess: (amount: number
       }, 2000)
     } catch (err) {
       setError("Transfer failed. Please try again.")
-      console.error(err)
+      logger.error(err)
     } finally {
       setLoading(false)
     }
