@@ -21,12 +21,20 @@ export default function SettingsPage() {
   const [message, setMessage] = useState("")
 
   useEffect(() => {
-    const userData = localStorage.getItem("user")
-    if (userData) {
-      const parsed = JSON.parse(userData)
-      setUser(parsed)
-      setEmail(parsed.email)
-    }
+    let mounted = true
+    ;(async () => {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' })
+        if (!mounted) return
+        if (!res.ok) return
+        const data = await res.json()
+        setUser(data.user?.profile || null)
+        setEmail(data.user?.email || '')
+      } catch (err) {
+        console.error('Failed to fetch profile', err)
+      }
+    })()
+    return () => { mounted = false }
   }, [])
 
   const handleUpdateEmail = async () => {
