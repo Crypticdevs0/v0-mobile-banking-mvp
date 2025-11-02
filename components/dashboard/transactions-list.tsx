@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { ArrowUpRight, ArrowDownLeft } from "lucide-react"
 import Loader from "@/components/common/loader"
+import logger from '@/lib/logger'
 
 interface Transaction {
   id: string
@@ -26,7 +27,7 @@ export default function TransactionsList() {
         const data = await response.json()
         setTransactions(data.transactions || [])
       } catch (error) {
-        console.error("Failed to fetch transactions:", error)
+        logger.error("Failed to fetch transactions:", error)
       } finally {
         setLoading(false)
       }
