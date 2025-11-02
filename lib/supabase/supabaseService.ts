@@ -1,5 +1,6 @@
 import { createClient as createBrowserSupabaseClient } from "@supabase/supabase-js"
 import { createClient as createServerSupabaseClient } from "./server"
+import { createClient as createBrowserSupabaseClient } from "./client"
 
 // Browser client for client components
 export function getBrowserSupabaseClient() {
