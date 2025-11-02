@@ -21,8 +21,8 @@ dotenv.config()
 const requiredEnv = ["JWT_SECRET", "FINERACT_URL", "FINERACT_USERNAME", "FINERACT_PASSWORD"]
 const missing = requiredEnv.filter((k) => !process.env[k])
 if (missing.length) {
-  console.error("Missing required environment variables:", missing.join(", "))
-  console.error("Aborting server start - please set the required environment variables and restart.")
+  logger.error("Missing required environment variables:", missing.join(", "))
+  logger.error("Aborting server start - please set the required environment variables and restart.")
   process.exit(1)
 }
 
@@ -285,6 +285,6 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3001
 httpServer.listen(PORT, () => {
-  console.log(`Banking server running on port ${PORT}`)
-  console.log(`Socket.io listening for connections`)
+  logger.info(`Banking server running on port ${PORT}`)
+  logger.info(`Socket.io listening for connections`)
 })
