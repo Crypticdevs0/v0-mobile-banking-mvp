@@ -10,6 +10,12 @@ const router = express.Router()
 // Initialize Supabase client for backend operations
 const supabase = createSupabase(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
+// Enforce JWT secret presence at startup to avoid accidental weak fallback
+if (!process.env.JWT_SECRET) {
+  console.error('JWT_SECRET is not configured. Aborting startup.');
+  process.exit(1);
+}
+
 // Validate Supabase JWT token
 const verifySupabaseToken = async (req: any, res: any, next: any) => {
   const token = req.headers.authorization?.split(" ")[1]
@@ -77,7 +83,7 @@ router.post("/signup", async (req: any, res: any) => {
 
     res.json({
       success: true,
-      token: authData.user?.id ? jwt.sign({ userId: userId, email, accountId: fineractAccountId }, process.env.JWT_SECRET || "your-secret-key", { expiresIn: "7d" }) : undefined,
+      token: authData.user?.id ? jwt.sign({ userId: userId, email, accountId: fineractAccountId }, process.env.JWT_SECRET, { expiresIn: "7d" }) : undefined,
       user: {
         id: userId,
         email,
@@ -130,7 +136,7 @@ router.post("/login", async (req: any, res: any) => {
         email: authData.user.email,
         accountId: account.fineract_account_id,
       },
-      process.env.JWT_SECRET || "your-secret-key",
+      process.env.JWT_SECRET,
       { expiresIn: "7d" },
     )
 
