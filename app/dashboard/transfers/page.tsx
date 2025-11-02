@@ -46,6 +46,7 @@ export default function TransfersPage() {
       setStep(3)
       setTimeout(() => router.push("/dashboard"), 3000)
     } catch (err: any) {
+      logger.error(err)
       setError(err.message)
     } finally {
       setLoading(false)
