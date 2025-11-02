@@ -113,6 +113,8 @@ app.use((req, res, next) => {
 // Mount Supabase-backed auth routes (signup/login) and the OTP router with CSRF protection
 app.use("/api/auth", csrfProtection, supabaseAuthRouter)
 app.use("/api/auth", csrfProtection, otpRouter)
+// Mount deposits router to handle POST /api/deposits
+app.use("/api", csrfProtection, depositsRouter)
 
 // ===== Account Routes =====
 app.get("/api/accounts/balance", verifyToken, async (req, res) => {
