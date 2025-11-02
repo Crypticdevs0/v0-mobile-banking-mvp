@@ -14,6 +14,7 @@ const { SocketService } = require("./services/socketService.js")
 // Require TypeScript routes/middleware via ts-node (register at startup when using start script)
 const otpRouter = require("./routes/otpAuth.ts").default
 const supabaseAuthRouter = require("./routes/supabaseAuth.ts").default
+const depositsRouter = require("./routes/deposits.ts").default
 const { verifyToken } = require("./middleware/auth.ts")
 
 const express = require("express")
