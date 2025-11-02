@@ -34,9 +34,13 @@ Connection test endpoint
 - Keep this disabled in production.
 
 Seeding Supabase (manual steps)
-- Use the Supabase SQL editor or the supabase CLI to create example users, accounts, transactions and notifications.
+- Use the Supabase SQL editor or the supabase CLI to create example users, accounts, transactions and notifications, or run the included seeding script.
 - Ensure RLS policies are set to allow authenticated users to access their own rows.
-- If you want me to add a simple seed SQL and a runner script, say so and provide access to the SUPABASE_SERVICE_ROLE_KEY.
+- To run the included seeding script (requires SUPABASE_SERVICE_ROLE_KEY and NEXT_PUBLIC_SUPABASE_URL/SUPABASE_URL):
+
+  pnpm run seed
+
+  This will create demo auth users (alice@bank.com, bob@bank.com), profiles, accounts, a couple of transactions and notifications.
 
 Docker / Production
 - Backend should run on the port specified by PORT environment variable; ensure that BACKEND_ORIGIN points to the production origin (https://api.example.com) and NEXT_PUBLIC_SOCKET_URL is set to the same origin.
