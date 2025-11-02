@@ -12,6 +12,7 @@ import Toast from "@/components/common/toast"
 import { useSocket } from "@/hooks/useSocket"
 import { useAuth } from "@/hooks/useAuth"
 import { motion } from "framer-motion"
+import logger from '@/lib/logger'
 
 export default function DashboardPage() {
   const router = useRouter()
