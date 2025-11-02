@@ -19,6 +19,20 @@ const nextConfig = {
       'clsx'
     ],
   },
+  async rewrites() {
+    const backend = process.env.BACKEND_ORIGIN || process.env.NEXT_PUBLIC_BACKEND_ORIGIN || 'http://localhost:4000'
+    return [
+      { source: '/api/:path*', destination: `${backend}/api/:path*` },
+      { source: '/socket.io/:path*', destination: `${backend}/socket.io/:path*` },
+      { source: '/realtime/:path*', destination: `${backend}/realtime/:path*` },
+    ]
+  },
+
+  env: {
+    NEXT_PUBLIC_SOCKET_URL: process.env.NEXT_PUBLIC_SOCKET_URL || process.env.BACKEND_ORIGIN || process.env.NEXT_PUBLIC_BACKEND_ORIGIN || 'http://localhost:4000',
+    BACKEND_ORIGIN: process.env.BACKEND_ORIGIN || process.env.NEXT_PUBLIC_BACKEND_ORIGIN || 'http://localhost:4000',
+  },
+
   async headers() {
     const isProd = process.env.NODE_ENV === 'production'
     const csp = [
