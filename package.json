@@ -5,8 +5,13 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
-    "lint": "eslint .",
+    "dev:frontend": "next dev",
+    "dev:backend": "node backend/server.js",
+    "dev:all": "sh -c \"PORT=4000 node backend/server.js & pnpm run dev\"",
     "start": "next start",
+    "start:backend": "node backend/server.js",
+    "seed": "node scripts/seed.js",
+    "lint": "eslint .",
     "audit": "pnpm audit --audit-level=low"
   },
   "dependencies": {
