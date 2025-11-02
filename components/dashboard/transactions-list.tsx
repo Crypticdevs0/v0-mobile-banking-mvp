@@ -22,12 +22,9 @@ export default function TransactionsList() {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const token = localStorage.getItem("authToken")
-        const response = await fetch("/api/transactions", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+        const response = await fetch("/api/transactions", { credentials: 'include' })
         const data = await response.json()
-        setTransactions(data.transactions)
+        setTransactions(data.transactions || [])
       } catch (error) {
         console.error("Failed to fetch transactions:", error)
       } finally {
