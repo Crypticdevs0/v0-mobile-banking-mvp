@@ -12,6 +12,7 @@ import Toast from "@/components/common/toast"
 import { useSocket } from "@/hooks/useSocket"
 import { useAuth } from "@/hooks/useAuth"
 import { motion } from "framer-motion"
+import logger from '@/lib/logger'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -31,14 +32,11 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchBalance = async () => {
       try {
-        const token = localStorage.getItem("authToken")
-        const response = await fetch("/api/accounts/balance", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
+        const response = await fetch("/api/accounts/balance", { credentials: 'include' })
         const data = await response.json()
         setBalance(data.balance)
       } catch (error) {
-        console.error("Failed to fetch balance:", error)
+        logger.error("Failed to fetch balance:", error)
       }
     }
 

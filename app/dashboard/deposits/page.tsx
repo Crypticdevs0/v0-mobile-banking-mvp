@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Download, ArrowLeft, Upload } from "lucide-react"
+import logger from '@/lib/logger'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -20,12 +21,16 @@ export default function DepositsPage() {
     if (!amount) return
     setLoading(true)
     try {
-      const token = localStorage.getItem("authToken")
+      const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' })
+      if (!csrfRes.ok) throw new Error('Failed to obtain CSRF token')
+      const csrfData = await csrfRes.json()
+
       const response = await fetch("/api/deposits", {
         method: "POST",
+        credentials: 'include',
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          "x-csrf-token": csrfData.csrfToken,
         },
         body: JSON.stringify({ amount: Number.parseFloat(amount), method }),
       })
@@ -34,7 +39,7 @@ export default function DepositsPage() {
       setSuccess(true)
       setTimeout(() => router.push("/dashboard"), 2000)
     } catch (err: any) {
-      console.error(err)
+      logger.error(err)
     } finally {
       setLoading(false)
     }

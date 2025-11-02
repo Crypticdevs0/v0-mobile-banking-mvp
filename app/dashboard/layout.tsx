@@ -4,8 +4,7 @@ import type React from "react"
 import { useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { createClient as createSupabaseClient } from "@/lib/supabase/client"
-import { useAuth } from "@/hooks/useAuth"
+import logger from '@/lib/logger'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -26,13 +25,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const channelRef = useRef<any>(null)
 
   useEffect(() => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("authToken") : null
-    const ok = !!token
-    setAuthed(ok)
-    setChecking(false)
-    if (!ok) {
-      router.replace("/auth/login")
-    }
+    let mounted = true
+    ;(async () => {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' })
+        if (!mounted) return
+        if (!res.ok) {
+          setAuthed(false)
+          router.replace('/auth/login')
+          return
+        }
+        setAuthed(true)
+      } catch (err) {
+        logger.error('Auth check failed', err)
+        setAuthed(false)
+        router.replace('/auth/login')
+      } finally {
+        if (mounted) setChecking(false)
+      }
+    })()
+
+    return () => { mounted = false }
   }, [router])
 
   // Realtime subscriptions for the authenticated user

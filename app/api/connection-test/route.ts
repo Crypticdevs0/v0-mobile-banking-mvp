@@ -12,7 +12,17 @@ async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutM
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  const secret = process.env.CONNECTION_TEST_SECRET
+  if (!secret) {
+    return NextResponse.json({ error: 'Connection test disabled' }, { status: 403 })
+  }
+
+  const headers = new Headers(req.headers as any)
+  const provided = headers.get('x-connection-test-secret')
+  if (provided !== secret) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? process.env.SUPABASE_ANON_KEY
   const service = process.env.SUPABASE_SERVICE_ROLE_KEY
