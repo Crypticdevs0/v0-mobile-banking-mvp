@@ -38,7 +38,7 @@ export default function DepositsPage() {
       setSuccess(true)
       setTimeout(() => router.push("/dashboard"), 2000)
     } catch (err: any) {
-      console.error(err)
+      logger.error(err)
     } finally {
       setLoading(false)
     }
