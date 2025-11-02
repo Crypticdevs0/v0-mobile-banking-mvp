@@ -1,5 +1,4 @@
 import express from "express"
-import express from "express"
 import { createClient as createSupabase } from "@supabase/supabase-js"
 import jwt from "jsonwebtoken"
 import { fineractService } from "../services/fineractService.js"
@@ -13,7 +12,7 @@ const supabase = createSupabase(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.e
 
 // Enforce JWT secret presence at startup to avoid accidental weak fallback
 if (!process.env.JWT_SECRET) {
-  console.error('JWT_SECRET is not configured. Aborting startup.');
+  logger.error('JWT_SECRET is not configured. Aborting startup.');
   process.exit(1);
 }
 
