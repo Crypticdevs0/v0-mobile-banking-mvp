@@ -1,15 +1,28 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import logger from '@/lib/logger'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
+  const { user } = useAuth()
   const [checking, setChecking] = useState(true)
   const [authed, setAuthed] = useState(false)
+
+  // Create a single Supabase client instance for this layout
+  const supabase = useMemo(() => {
+    try {
+      return createSupabaseClient()
+    } catch (e) {
+      console.error("Failed to create Supabase client", e)
+      return null
+    }
+  }, [])
+
+  const channelRef = useRef<any>(null)
 
   useEffect(() => {
     let mounted = true
@@ -34,6 +47,60 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     return () => { mounted = false }
   }, [router])
+
+  // Realtime subscriptions for the authenticated user
+  useEffect(() => {
+    if (!authed || !user?.id || !supabase) return
+
+    // Clean up any existing channel before creating a new one
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current)
+      channelRef.current = null
+    }
+
+    const uid = String(user.id)
+    const channel = supabase
+      .channel("dashboard-realtime")
+      // Transactions where the user is the sender
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "transactions", filter: `sender_id=eq.${uid}` },
+        (payload) => {
+          console.info("Realtime: transaction sent", payload.new)
+          window.dispatchEvent(new CustomEvent("transactions:insert", { detail: payload.new }))
+        },
+      )
+      // Transactions where the user is the receiver
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "transactions", filter: `receiver_id=eq.${uid}` },
+        (payload) => {
+          console.info("Realtime: transaction received", payload.new)
+          window.dispatchEvent(new CustomEvent("transactions:insert", { detail: payload.new }))
+        },
+      )
+      // Notifications for the user
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${uid}` },
+        (payload) => {
+          console.info("Realtime: notification", payload.new)
+          window.dispatchEvent(new CustomEvent("notifications:insert", { detail: payload.new }))
+        },
+      )
+      .subscribe((status) => {
+        console.log("Realtime channel status:", status)
+      })
+
+    channelRef.current = channel
+
+    return () => {
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current)
+        channelRef.current = null
+      }
+    }
+  }, [authed, user?.id, supabase])
 
   if (checking) {
     return (
