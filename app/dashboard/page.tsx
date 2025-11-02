@@ -35,7 +35,7 @@ export default function DashboardPage() {
         const data = await response.json()
         setBalance(data.balance)
       } catch (error) {
-        console.error("Failed to fetch balance:", error)
+        logger.error("Failed to fetch balance:", error)
       }
     }
 
