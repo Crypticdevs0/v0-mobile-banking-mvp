@@ -1,15 +1,17 @@
 import { createClient as createBrowserSupabaseClient } from "@supabase/supabase-js"
-import { createClient as createServerSupabaseClient } from "./server"
+import { getAdminSupabase } from "./admin"
 
 // Browser client for client components
 export function getBrowserSupabaseClient() {
   return createBrowserSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 }
 
-// Server client for server components
-export const getServerSupabaseClient = createServerSupabaseClient
+// Server/admin client factory
+export function getServerSupabaseClient() {
+  return getAdminSupabase()
+}
 
-// Utility functions for Supabase operations
+// Utility functions for Supabase operations using the admin client (safe on server only)
 export const supabaseOperations = {
   // User operations
   async createUserProfile(
@@ -19,7 +21,7 @@ export const supabaseOperations = {
     lastName: string,
     fineractClientId: string,
   ) {
-    const supabase = await createServerSupabaseClient()
+    const supabase = getAdminSupabase()
     const { data, error } = await supabase.from("users").insert({
       id: userId,
       email,
@@ -33,7 +35,7 @@ export const supabaseOperations = {
   },
 
   async getUserProfile(userId: string) {
-    const supabase = await createServerSupabaseClient()
+    const supabase = getAdminSupabase()
     const { data, error } = await supabase.from("users").select("*").eq("id", userId).single()
 
     if (error) throw new Error(`Failed to fetch user profile: ${error.message}`)
@@ -41,7 +43,7 @@ export const supabaseOperations = {
   },
 
   async getUserProfileByEmail(email: string) {
-    const supabase = await createServerSupabaseClient()
+    const supabase = getAdminSupabase()
     const { data, error } = await supabase.from("users").select("*").eq("email", email).single()
 
     if (error) {
@@ -55,7 +57,7 @@ export const supabaseOperations = {
 
   // Account operations
   async createAccount(userId: string, fineractAccountId: string, balance: number, accountNumber: string) {
-    const supabase = await createServerSupabaseClient()
+    const supabase = getAdminSupabase()
     const { data, error } = await supabase.from("accounts").insert({
       user_id: userId,
       fineract_account_id: fineractAccountId,
@@ -68,7 +70,7 @@ export const supabaseOperations = {
   },
 
   async updateAccountBalance(accountId: string, balance: number) {
-    const supabase = await createServerSupabaseClient()
+    const supabase = getAdminSupabase()
     const { data, error } = await supabase
       .from("accounts")
       .update({ balance, updated_at: new Date().toISOString() })
@@ -79,7 +81,7 @@ export const supabaseOperations = {
   },
 
   async getAccountByUserId(userId: string) {
-    const supabase = await createServerSupabaseClient()
+    const supabase = getAdminSupabase()
     const { data, error } = await supabase.from("accounts").select("*").eq("user_id", userId).single()
 
     if (error) throw new Error(`Failed to fetch account: ${error.message}`)
@@ -94,7 +96,7 @@ export const supabaseOperations = {
     description: string,
     fineractTransactionId: string,
   ) {
-    const supabase = await createServerSupabaseClient()
+    const supabase = getAdminSupabase()
     const { data, error } = await supabase.from("transactions").insert({
       sender_id: senderId,
       receiver_id: receiverId,
@@ -109,7 +111,7 @@ export const supabaseOperations = {
   },
 
   async getUserTransactions(userId: string, limit = 20) {
-    const supabase = await createServerSupabaseClient()
+    const supabase = getAdminSupabase()
     const { data, error } = await supabase
       .from("transactions")
       .select("*")
@@ -128,7 +130,7 @@ export const supabaseOperations = {
     message: string,
     notificationType: "info" | "success" | "warning" | "error" = "info",
   ) {
-    const supabase = await createServerSupabaseClient()
+    const supabase = getAdminSupabase()
     const { data, error } = await supabase.from("notifications").insert({
       user_id: userId,
       title,
@@ -141,7 +143,7 @@ export const supabaseOperations = {
   },
 
   async getUserNotifications(userId: string) {
-    const supabase = await createServerSupabaseClient()
+    const supabase = getAdminSupabase()
     const { data, error } = await supabase
       .from("notifications")
       .select("*")
@@ -153,7 +155,7 @@ export const supabaseOperations = {
   },
 
   async markNotificationRead(notificationId: string) {
-    const supabase = await createServerSupabaseClient()
+    const supabase = getAdminSupabase()
     const { data, error } = await supabase.from("notifications").update({ read: true }).eq("id", notificationId)
 
     if (error) throw new Error(`Failed to update notification: ${error.message}`)
