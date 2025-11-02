@@ -13,8 +13,17 @@ export default function Landing() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken")
-    setIsLoggedIn(!!token)
+    let mounted = true
+    ;(async () => {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' })
+        if (!mounted) return
+        setIsLoggedIn(res.ok)
+      } catch (err) {
+        setIsLoggedIn(false)
+      }
+    })()
+    return () => { mounted = false }
   }, [])
 
   const handleGetStarted = () => {
