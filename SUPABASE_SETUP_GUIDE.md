@@ -109,7 +109,9 @@ FINERACT_PRODUCT_ID=1
 # JWT
 JWT_SECRET=your-secret-key-here
 CLIENT_URL=http://localhost:3000
-PORT=3001
+PORT=4000
+# For local connection testing only (set this in .env.local or via devserver MCP)
+# CONNECTION_TEST_SECRET=dev-connection-secret
 \`\`\`
 
 ## Next Steps

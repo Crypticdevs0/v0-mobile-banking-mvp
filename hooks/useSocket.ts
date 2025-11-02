@@ -21,7 +21,12 @@ export function useSocket() {
         logger.error('Failed to fetch user for socket auth', err)
       }
 
-      socketRef.current = io(process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001", {
+      const url = process.env.NEXT_PUBLIC_SOCKET_URL && process.env.NEXT_PUBLIC_SOCKET_URL.trim().length > 0 ? process.env.NEXT_PUBLIC_SOCKET_URL : undefined
+      const socketPath = process.env.NEXT_PUBLIC_SOCKET_PATH || "/socket.io"
+
+      socketRef.current = io(url, {
+        path: socketPath,
+        transports: ["websocket"],
         reconnection: true,
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,

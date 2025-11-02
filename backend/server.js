@@ -65,7 +65,9 @@ app.get('/api/csrf-token', csrfProtection, (req, res) => {
 })
 
 // Socket.io setup with origin validation
+const SOCKET_PATH = process.env.SOCKET_PATH || "/socket.io"
 const io = new Server(httpServer, {
+  path: SOCKET_PATH,
   cors: {
     origin: allowedOrigins,
     credentials: true,
@@ -283,7 +285,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: "Internal server error" })
 })
 
-const PORT = process.env.PORT || 3001
+const PORT = process.env.PORT || 4000
 httpServer.listen(PORT, () => {
   logger.info(`Banking server running on port ${PORT}`)
   logger.info(`Socket.io listening for connections`)

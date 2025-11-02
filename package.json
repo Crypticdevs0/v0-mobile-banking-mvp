@@ -5,7 +5,9 @@
   "scripts": {
     "build": "next build",
     "dev": "next dev",
-    "lint": "eslint .",
+    "dev:frontend": "next dev",
+    "dev:backend": "node backend/server.js",
+    "dev:all": "sh -c \"PORT=4000 node backend/server.js & pnpm run dev\"",
     "start": "next start",
     "audit": "pnpm audit --audit-level=low",
     "start:backend": "node -r ts-node/register backend/server.cjs"
