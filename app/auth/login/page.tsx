@@ -104,7 +104,7 @@ export default function LoginPage() {
                 <Lock className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
                 <Input
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
+                  placeholder="••••••���•"
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value)
@@ -129,12 +129,7 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Demo Credentials */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <p className="text-xs font-semibold text-blue-900 mb-2">Demo Credentials:</p>
-            <p className="text-xs text-blue-700">Email: alice@bank.com</p>
-            <p className="text-xs text-blue-700">Password: password123</p>
-          </div>
+          {/* Demo credentials removed for security */}
 
           {/* Links */}
           <div className="space-y-3 text-center text-sm">
