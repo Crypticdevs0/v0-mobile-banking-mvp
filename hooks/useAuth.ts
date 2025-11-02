@@ -14,26 +14,37 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken")
-    const userStr = localStorage.getItem("user")
-
-    if (token && userStr) {
+    let mounted = true
+    ;(async () => {
       try {
-        const userData = JSON.parse(userStr)
-        setUser(userData)
-      } catch (error) {
-        console.error("Failed to parse user data:", error)
-        localStorage.removeItem("authToken")
-        localStorage.removeItem("user")
+        const res = await fetch('/api/auth/me', { credentials: 'include' })
+        if (!mounted) return
+        if (!res.ok) {
+          setUser(null)
+          setLoading(false)
+          return
+        }
+        const data = await res.json()
+        setUser(data.user || null)
+      } catch (err) {
+        console.error('Failed to fetch current user', err)
+        setUser(null)
+      } finally {
+        if (mounted) setLoading(false)
       }
-    }
+    })()
 
-    setLoading(false)
+    return () => {
+      mounted = false
+    }
   }, [])
 
-  const logout = () => {
-    localStorage.removeItem("authToken")
-    localStorage.removeItem("user")
+  const logout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+    } catch (err) {
+      console.error('Logout request failed', err)
+    }
     setUser(null)
   }
 
