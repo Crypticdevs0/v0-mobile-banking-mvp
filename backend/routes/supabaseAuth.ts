@@ -1,14 +1,13 @@
 import express from "express"
-import express from "express"
-import { createClient as createSupabase } from "@supabase/supabase-js"
+import { getAdminSupabase } from "../../lib/supabase/admin.js"
 import jwt from "jsonwebtoken"
 import { fineractService } from "../services/fineractService.js"
 import { supabaseOperations } from "../../lib/supabase/supabaseService.js"
 
 const router = express.Router()
 
-// Initialize Supabase client for backend operations
-const supabase = createSupabase(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+// Initialize Supabase admin client for backend operations
+const supabase = getAdminSupabase()
 
 // Validate Supabase JWT token
 const verifySupabaseToken = async (req: any, res: any, next: any) => {
