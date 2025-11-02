@@ -1,11 +1,25 @@
 // Fineract API Service - Centralized integration with Fineract sandbox
 // Handles all HTTP communication with Fineract API
 
-const FINERACT_URL = process.env.FINERACT_URL || "https://sandbox.mifos.io"
+import logger from '../logger.js'
+
+const FINERACT_URL = process.env.FINERACT_URL
 const FINERACT_TENANT = process.env.FINERACT_TENANT || "default"
-const FINERACT_USERNAME = process.env.FINERACT_USERNAME || "mifos"
-const FINERACT_PASSWORD = process.env.FINERACT_PASSWORD || "password"
-const FINERACT_PRODUCT_ID = process.env.FINERACT_PRODUCT_ID || "1"
+const FINERACT_USERNAME = process.env.FINERACT_USERNAME
+const FINERACT_PASSWORD = process.env.FINERACT_PASSWORD
+const FINERACT_PRODUCT_ID = process.env.FINERACT_PRODUCT_ID
+
+const missingFineract = [
+  ['FINERACT_URL', FINERACT_URL],
+  ['FINERACT_USERNAME', FINERACT_USERNAME],
+  ['FINERACT_PASSWORD', FINERACT_PASSWORD],
+  ['FINERACT_PRODUCT_ID', FINERACT_PRODUCT_ID],
+].filter(([, v]) => !v).map(([k]) => k)
+
+if (missingFineract.length) {
+  logger.error('Missing required Fineract environment variables:', missingFineract.join(', '))
+  throw new Error('Fineract environment not configured')
+}
 
 // Helper function to create Basic Auth header
 function getAuthHeader() {
@@ -39,7 +53,7 @@ async function makeFineractRequest(endpoint, method = "GET", body = null) {
 
     return data
   } catch (error) {
-    console.error(`Fineract request failed: ${endpoint}`, error)
+    logger.error(`Fineract request failed: ${endpoint}`, error)
     throw error
   }
 }
@@ -140,7 +154,7 @@ export const fineractService = {
         currency: account.currency?.code || "USD",
       }
     } catch (error) {
-      console.error("Error fetching balance:", error)
+      logger.error("Error fetching balance:", error)
       throw error
     }
   },
@@ -176,7 +190,7 @@ export const fineractService = {
         transactionId: depositResult.resourceId,
       }
     } catch (error) {
-      console.error("Transfer failed:", error)
+      logger.error("Transfer failed:", error)
       throw error
     }
   },

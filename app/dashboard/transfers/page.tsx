@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Send, ArrowLeft } from "lucide-react"
+import logger from '@/lib/logger'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
@@ -25,12 +26,17 @@ export default function TransfersPage() {
 
     setLoading(true)
     try {
-      const token = localStorage.getItem("authToken")
+      // Obtain CSRF token
+      const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' })
+      if (!csrfRes.ok) throw new Error('Failed to obtain CSRF token')
+      const csrfData = await csrfRes.json()
+
       const response = await fetch("/api/transfers", {
         method: "POST",
+        credentials: 'include',
         headers: {
-          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
+          "x-csrf-token": csrfData.csrfToken,
         },
         body: JSON.stringify({ recipientAccountId: recipient, amount: Number.parseFloat(amount), description }),
       })
@@ -41,6 +47,7 @@ export default function TransfersPage() {
       setStep(3)
       setTimeout(() => router.push("/dashboard"), 3000)
     } catch (err: any) {
+      logger.error(err)
       setError(err.message)
     } finally {
       setLoading(false)

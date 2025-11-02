@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        run: npm i -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      - name: Lint (if present)
+        run: pnpm run lint --if-present
+
+      - name: Run tests (if present)
+        run: pnpm test --if-present
+
+      - name: Build Docker images
+        run: |
+          docker build -t ${{ github.repository }}:frontend-latest -f Dockerfile .
+          docker build -t ${{ github.repository }}:backend-latest -f backend/Dockerfile .
+
+      - name: Publish to GHCR
+        if: secrets.GHCR_PAT != ''
+        env:
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
+        run: |
+          echo $GHCR_PAT | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker tag ${{ github.repository }}:frontend-latest ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:frontend-latest
+          docker tag ${{ github.repository }}:backend-latest ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:backend-latest
+          docker push ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:frontend-latest
+          docker push ghcr.io/${{ github.repository_owner }}/${{ github.repository }}:backend-latest

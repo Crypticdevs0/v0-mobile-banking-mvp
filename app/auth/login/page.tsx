@@ -24,19 +24,22 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
+      // Fetch CSRF token first
+      const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' })
+      if (!csrfRes.ok) throw new Error('Failed to obtain CSRF token')
+      const csrfData = await csrfRes.json()
+
       const response = await fetch("/api/auth/login", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+        headers: { "Content-Type": "application/json", "x-csrf-token": csrfData.csrfToken },
         body: JSON.stringify({ email, password }),
       })
 
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || "Login failed")
 
-      localStorage.setItem("authToken", data.token)
-      localStorage.setItem("user", JSON.stringify(data.user))
-      localStorage.setItem("userEmail", email)
-
+      // Don't store token in localStorage; cookie is HttpOnly. Keep user in memory via auth hook.
       router.push("/dashboard")
     } catch (err: any) {
       setError(err.message)

@@ -9,12 +9,21 @@ import { Button } from "@/components/ui/button"
 export default function Landing() {
   const router = useRouter()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [activeTab, setActiveTab] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<number | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   useEffect(() => {
-    const token = localStorage.getItem("authToken")
-    setIsLoggedIn(!!token)
+    let mounted = true
+    ;(async () => {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' })
+        if (!mounted) return
+        setIsLoggedIn(res.ok)
+      } catch (err) {
+        setIsLoggedIn(false)
+      }
+    })()
+    return () => { mounted = false }
   }, [])
 
   const handleGetStarted = () => {

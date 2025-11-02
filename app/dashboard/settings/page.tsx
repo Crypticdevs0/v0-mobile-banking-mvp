@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
+import logger from '@/lib/logger'
 import { Bell, Lock, Eye, EyeOff, LogOut, ArrowLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -21,12 +22,20 @@ export default function SettingsPage() {
   const [message, setMessage] = useState("")
 
   useEffect(() => {
-    const userData = localStorage.getItem("user")
-    if (userData) {
-      const parsed = JSON.parse(userData)
-      setUser(parsed)
-      setEmail(parsed.email)
+    let mounted = true
+    ;(async () => {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' })
+        if (!mounted) return
+        if (!res.ok) return
+        const data = await res.json()
+        setUser(data.user?.profile || null)
+        setEmail(data.user?.email || '')
+      } catch (err) {
+      logger.error('Failed to fetch profile', err)
     }
+    })()
+    return () => { mounted = false }
   }, [])
 
   const handleUpdateEmail = async () => {
@@ -58,10 +67,13 @@ export default function SettingsPage() {
     }
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem("authToken")
-    localStorage.removeItem("user")
-    router.push("/auth/login")
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+    } catch (err) {
+      logger.error('Logout request failed', err)
+    }
+    router.push('/auth/login')
   }
 
   const containerVariants = {
