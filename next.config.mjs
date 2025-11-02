@@ -23,15 +23,18 @@ const nextConfig = {
     const backend = process.env.BACKEND_ORIGIN || process.env.NEXT_PUBLIC_BACKEND_ORIGIN || 'http://localhost:4000'
     return [
       { source: '/api/:path*', destination: `${backend}/api/:path*` },
-      { source: '/socket.io/:path*', destination: `${backend}/socket.io/:path*` },
+      { source: '/socket.io/:path*', destination: `${backend}${process.env.NEXT_PUBLIC_SOCKET_PATH || '/socket.io'}/:path*` },
       { source: '/realtime/:path*', destination: `${backend}/realtime/:path*` },
     ]
   },
 
   env: {
     NEXT_PUBLIC_SOCKET_URL: process.env.NEXT_PUBLIC_SOCKET_URL || process.env.BACKEND_ORIGIN || process.env.NEXT_PUBLIC_BACKEND_ORIGIN || 'http://localhost:4000',
-    NEXT_PUBLIC_SOCKET_PATH: process.env.NEXT_PUBLIC_SOCKET_PATH || '/socket.io',
+    NEXT_PUBLIC_SOCKET_PATH: process.env.NEXT_PUBLIC_SOCKET_PATH || process.env.SOCKET_PATH || '/socket.io',
     BACKEND_ORIGIN: process.env.BACKEND_ORIGIN || process.env.NEXT_PUBLIC_BACKEND_ORIGIN || 'http://localhost:4000',
+    CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:3000',
+    ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS || process.env.CLIENT_URL || 'http://localhost:3000',
+    PORT: process.env.PORT || '3000',
   },
 
   async headers() {
