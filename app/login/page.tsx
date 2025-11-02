@@ -8,11 +8,6 @@ import { motion } from "framer-motion"
 import { AlertCircle, Eye, EyeOff } from "lucide-react"
 import { CreditCard } from "lucide-react"
 
-const DEMO_CREDENTIALS = [
-  { email: "alice@bank.com", password: "password123" },
-  { email: "bob@bank.com", password: "password123" },
-  { email: "charlie@bank.com", password: "password123" },
-]
 
 export default function LoginPage() {
   const router = useRouter()
