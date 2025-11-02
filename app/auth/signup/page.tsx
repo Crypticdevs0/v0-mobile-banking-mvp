@@ -147,9 +147,15 @@ export default function SignUpPage() {
     if (!validateStep()) return
     setLoading(true)
     try {
+      // Fetch CSRF token first
+      const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' })
+      if (!csrfRes.ok) throw new Error('Failed to obtain CSRF token')
+      const csrfData = await csrfRes.json()
+
       const response = await fetch("/api/auth/signup", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        credentials: 'include',
+        headers: { "Content-Type": "application/json", "x-csrf-token": csrfData.csrfToken },
         body: JSON.stringify({
           ...formData,
           accountType,
@@ -159,9 +165,7 @@ export default function SignUpPage() {
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || "Signup failed")
 
-      localStorage.setItem("authToken", data.token)
-      localStorage.setItem("user", JSON.stringify(data.user))
-
+      // Cookie contains auth token; do not store in localStorage
       router.push("/auth/otp-verification")
     } catch (err: any) {
       setError(err.message || "Signup failed. Please try again.")
