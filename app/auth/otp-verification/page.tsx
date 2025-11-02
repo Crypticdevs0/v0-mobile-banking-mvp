@@ -17,13 +17,30 @@ export default function OTPVerificationPage() {
   const [userEmail, setUserEmail] = useState("")
 
   useEffect(() => {
-    const email = localStorage.getItem("userEmail") || ""
-    setUserEmail(email)
+    let mounted = true
+    ;(async () => {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' })
+        if (!mounted) return
+        if (res.ok) {
+          const data = await res.json()
+          const email = data?.user?.email || data?.user?.profile?.email || ''
+          setUserEmail(email)
+        } else {
+          setUserEmail('')
+        }
+      } catch {
+        setUserEmail('')
+      }
+    })()
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0))
     }, 1000)
-    return () => clearInterval(timer)
+    return () => {
+      mounted = false
+      clearInterval(timer)
+    }
   }, [])
 
   const handleVerify = async () => {
