@@ -31,8 +31,8 @@ export default function SettingsPage() {
         setUser(data.user?.profile || null)
         setEmail(data.user?.email || '')
       } catch (err) {
-        console.error('Failed to fetch profile', err)
-      }
+      logger.error('Failed to fetch profile', err)
+    }
     })()
     return () => { mounted = false }
   }, [])
