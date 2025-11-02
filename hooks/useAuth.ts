@@ -25,7 +25,19 @@ export function useAuth() {
           return
         }
         const data = await res.json()
-        setUser(data.user || null)
+        if (data.user) {
+          const u = data.user
+          const profile = u.profile || {}
+          const name = u.name || (profile.first_name ? `${profile.first_name} ${profile.last_name}` : undefined)
+          setUser({
+            id: u.id,
+            name,
+            email: u.email || profile.email,
+            accountId: u.accountId || u.accountId,
+          })
+        } else {
+          setUser(null)
+        }
       } catch (err) {
         console.error('Failed to fetch current user', err)
         setUser(null)
