@@ -1,14 +1,14 @@
 import express from "express"
-import { createClient as createSupabase } from "@supabase/supabase-js"
+import { getAdminSupabase } from "../../lib/supabase/admin.js"
 import jwt from "jsonwebtoken"
 import { fineractService } from "../services/fineractService.js"
 import { supabaseOperations } from "../../lib/supabase/supabaseService.js"
-
-const router = express.Router()
 import logger from '../logger.js'
 
-// Initialize Supabase client for backend operations
-const supabase = createSupabase(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+const router = express.Router()
+
+// Initialize Supabase admin client for backend operations
+const supabase = getAdminSupabase()
 
 // Enforce JWT secret presence at startup to avoid accidental weak fallback
 if (!process.env.JWT_SECRET) {

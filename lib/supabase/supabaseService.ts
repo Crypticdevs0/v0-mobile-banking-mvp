@@ -1,4 +1,3 @@
-import { createClient as createBrowserSupabaseClient } from "@supabase/supabase-js"
 import { createClient as createBrowserSupabaseClient } from "./client"
 import { getAdminSupabase } from "./admin"
 
@@ -17,7 +16,7 @@ export function getServerSupabaseClient() {
   return createBrowserSupabaseClient()
 }
 
-// Utility functions for Supabase operations
+// Utility functions for Supabase operations using the server/admin client
 export const supabaseOperations = {
   // User operations
   async createUserProfile(

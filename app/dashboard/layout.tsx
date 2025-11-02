@@ -5,6 +5,8 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import logger from '@/lib/logger'
+import { useAuth } from "@/hooks/useAuth"
+import { createClient as createSupabaseClient } from "@/lib/supabase/client"
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter()
