@@ -23,7 +23,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }
         setAuthed(true)
       } catch (err) {
-        console.error('Auth check failed', err)
+        logger.error('Auth check failed', err)
         setAuthed(false)
         router.replace('/auth/login')
       } finally {
