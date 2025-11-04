@@ -17,30 +17,13 @@ export default function OTPVerificationPage() {
   const [userEmail, setUserEmail] = useState("")
 
   useEffect(() => {
-    let mounted = true
-    ;(async () => {
-      try {
-        const res = await fetch('/api/auth/me', { credentials: 'include' })
-        if (!mounted) return
-        if (res.ok) {
-          const data = await res.json()
-          const email = data?.user?.email || data?.user?.profile?.email || ''
-          setUserEmail(email)
-        } else {
-          setUserEmail('')
-        }
-      } catch {
-        setUserEmail('')
-      }
-    })()
+    const email = localStorage.getItem("userEmail") || ""
+    setUserEmail(email)
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0))
     }, 1000)
-    return () => {
-      mounted = false
-      clearInterval(timer)
-    }
+    return () => clearInterval(timer)
   }, [])
 
   const handleVerify = async () => {
@@ -61,6 +44,8 @@ export default function OTPVerificationPage() {
       if (!response.ok) throw new Error(data.error || "Verification failed")
 
       setVerified(true)
+      localStorage.setItem("accountNumber", data.accountNumber)
+      localStorage.setItem("routingNumber", data.routingNumber)
 
       setTimeout(() => {
         router.push("/dashboard")
@@ -111,12 +96,12 @@ export default function OTPVerificationPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 flex items-center justify-center px-4 py-12">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-md w-full">
-        <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 text-center">
+        <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="mb-6">
             <Mail className="w-16 h-16 text-blue-600 mx-auto" />
           </motion.div>
 
-          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Verify Your Email</h1>
+          <h1 className="text-2xl font-bold text-slate-900 mb-2">Verify Your Email</h1>
           <p className="text-slate-600 mb-8">We sent a 6-digit code to</p>
           <p className="font-semibold text-slate-900 mb-8 break-all">{userEmail}</p>
 

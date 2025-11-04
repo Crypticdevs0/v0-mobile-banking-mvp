@@ -12,7 +12,6 @@ import Toast from "@/components/common/toast"
 import { useSocket } from "@/hooks/useSocket"
 import { useAuth } from "@/hooks/useAuth"
 import { motion } from "framer-motion"
-import logger from '@/lib/logger'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -32,11 +31,14 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchBalance = async () => {
       try {
-        const response = await fetch("/api/accounts/balance", { credentials: 'include' })
+        const token = localStorage.getItem("authToken")
+        const response = await fetch("/api/accounts/balance", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
         const data = await response.json()
         setBalance(data.balance)
       } catch (error) {
-        logger.error("Failed to fetch balance:", error)
+        console.error("Failed to fetch balance:", error)
       }
     }
 
@@ -76,7 +78,7 @@ export default function DashboardPage() {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen pb-24 bg-background">
-      <div className="max-w-md mx-auto">
+      <div className="max-w-lg mx-auto">
         <Header user={user} />
         <BalanceCard balance={balance} />
         <QuickActions onTransferClick={() => setShowTransferModal(true)} />

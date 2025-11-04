@@ -1,7 +1,6 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import logger from '@/lib/logger'
 
 interface User {
   id: string | number
@@ -15,49 +14,26 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    let mounted = true
-    ;(async () => {
-      try {
-        const res = await fetch('/api/auth/me', { credentials: 'include' })
-        if (!mounted) return
-        if (!res.ok) {
-          setUser(null)
-          setLoading(false)
-          return
-        }
-        const data = await res.json()
-        if (data.user) {
-          const u = data.user
-          const profile = u.profile || {}
-          const name = u.name || (profile.first_name ? `${profile.first_name} ${profile.last_name}` : undefined)
-          setUser({
-            id: u.id,
-            name,
-            email: u.email || profile.email,
-            accountId: u.accountId || u.accountId,
-          })
-        } else {
-          setUser(null)
-        }
-      } catch (err) {
-        logger.error('Failed to fetch current user', err)
-        setUser(null)
-      } finally {
-        if (mounted) setLoading(false)
-      }
-    })()
+    const token = localStorage.getItem("authToken")
+    const userStr = localStorage.getItem("user")
 
-    return () => {
-      mounted = false
+    if (token && userStr) {
+      try {
+        const userData = JSON.parse(userStr)
+        setUser(userData)
+      } catch (error) {
+        console.error("Failed to parse user data:", error)
+        localStorage.removeItem("authToken")
+        localStorage.removeItem("user")
+      }
     }
+
+    setLoading(false)
   }, [])
 
-  const logout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
-    } catch (err) {
-      logger.error('Logout request failed', err)
-    }
+  const logout = () => {
+    localStorage.removeItem("authToken")
+    localStorage.removeItem("user")
     setUser(null)
   }
 

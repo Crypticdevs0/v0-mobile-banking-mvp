@@ -1,0 +1,46 @@
+app = "premier-banking-mvp"
+primary_region = "iad"
+
+[build]
+image = "premiere-banking:latest"
+
+[env]
+NODE_ENV = "production"
+PORT = "3000"
+
+[[services]]
+internal_port = 3001
+processes = ["app"]
+
+[services.http_checks]
+enabled = true
+grace_period = "30s"
+interval = "15s"
+method = "get"
+path = "/api/health"
+protocol = "http"
+timeout = "5s"
+
+[services.tcp_checks]
+disabled = false
+grace_period = "30s"
+interval = "15s"
+timeout = "5s"
+
+[[services.ports]]
+port = 80
+handlers = ["http"]
+force_https = true
+
+[[services.ports]]
+port = 443
+handlers = ["tls", "http"]
+
+[[vm]]
+cpu_kind = "shared"
+cpus = 1
+memory_mb = 256
+
+[metrics]
+port = 9090
+path = "/metrics"

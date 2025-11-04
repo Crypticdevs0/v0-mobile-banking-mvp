@@ -4,7 +4,6 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Download, ArrowLeft, Upload } from "lucide-react"
-import logger from '@/lib/logger'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -21,16 +20,12 @@ export default function DepositsPage() {
     if (!amount) return
     setLoading(true)
     try {
-      const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' })
-      if (!csrfRes.ok) throw new Error('Failed to obtain CSRF token')
-      const csrfData = await csrfRes.json()
-
+      const token = localStorage.getItem("authToken")
       const response = await fetch("/api/deposits", {
         method: "POST",
-        credentials: 'include',
         headers: {
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
-          "x-csrf-token": csrfData.csrfToken,
         },
         body: JSON.stringify({ amount: Number.parseFloat(amount), method }),
       })
@@ -39,7 +34,7 @@ export default function DepositsPage() {
       setSuccess(true)
       setTimeout(() => router.push("/dashboard"), 2000)
     } catch (err: any) {
-      logger.error(err)
+      console.error(err)
     } finally {
       setLoading(false)
     }
@@ -71,7 +66,7 @@ export default function DepositsPage() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <div className="max-w-md mx-auto px-4 py-6 border-b border-border">
+      <div className="max-w-lg mx-auto px-4 py-6 border-b border-border">
         <div className="flex items-center gap-4">
           <Link href="/dashboard">
             <ArrowLeft className="w-6 h-6 text-foreground cursor-pointer hover:opacity-70" />
@@ -82,7 +77,7 @@ export default function DepositsPage() {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-8">
+      <div className="max-w-lg mx-auto px-4 py-8">
         <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
           <Tabs value={method} onValueChange={setMethod} className="w-full">
             <TabsList className="grid w-full grid-cols-3">

@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  backend:
+    image: premier-banking:latest
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      FINERACT_URL: ${FINERACT_URL}
+      FINERACT_USERNAME: ${FINERACT_USERNAME}
+      FINERACT_PASSWORD: ${FINERACT_PASSWORD}
+      FINERACT_TENANT: ${FINERACT_TENANT}
+      FINERACT_PRODUCT_ID: ${FINERACT_PRODUCT_ID}
+      JWT_SECRET: ${JWT_SECRET}
+      CLIENT_URL: ${CLIENT_URL}
+    restart: always
+    networks:
+      - banking-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  frontend:
+    image: premier-banking:latest
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      NEXT_PUBLIC_SOCKET_URL: ${NEXT_PUBLIC_SOCKET_URL}
+    restart: always
+    depends_on:
+      - backend
+    networks:
+      - banking-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  banking-network:
+    driver: bridge

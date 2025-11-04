@@ -147,15 +147,9 @@ export default function SignUpPage() {
     if (!validateStep()) return
     setLoading(true)
     try {
-      // Fetch CSRF token first
-      const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' })
-      if (!csrfRes.ok) throw new Error('Failed to obtain CSRF token')
-      const csrfData = await csrfRes.json()
-
       const response = await fetch("/api/auth/signup", {
         method: "POST",
-        credentials: 'include',
-        headers: { "Content-Type": "application/json", "x-csrf-token": csrfData.csrfToken },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
           accountType,
@@ -165,7 +159,9 @@ export default function SignUpPage() {
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || "Signup failed")
 
-      // Cookie contains auth token; do not store in localStorage
+      localStorage.setItem("authToken", data.token)
+      localStorage.setItem("user", JSON.stringify(data.user))
+
       router.push("/auth/otp-verification")
     } catch (err: any) {
       setError(err.message || "Signup failed. Please try again.")
@@ -379,11 +375,11 @@ export default function SignUpPage() {
               />
               <span className="text-sm text-slate-600">
                 I agree to the{" "}
-                <a href="/terms" className="text-blue-600 hover:underline">
+                <a href="#" className="text-blue-600 hover:underline">
                   Terms of Service
                 </a>{" "}
                 and{" "}
-                <a href="/privacy" className="text-blue-600 hover:underline">
+                <a href="#" className="text-blue-600 hover:underline">
                   Privacy Policy
                 </a>
               </span>
@@ -396,14 +392,14 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md mx-auto">
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
           <div className="flex items-center justify-center gap-2 mb-4">
             <CreditCard className="w-8 h-8 text-blue-600" />
             <span className="text-2xl font-bold text-slate-900">Premier America</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Create Your Account</h1>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Create Your Account</h1>
           <p className="text-slate-600">
             Step {step + 1} of {steps.length}
           </p>
@@ -427,7 +423,7 @@ export default function SignUpPage() {
         </div>
 
         {/* Form Content */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mb-6">
+        <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
           <AnimatePresence mode="wait">{renderStep()}</AnimatePresence>
 
           {/* Error Message */}

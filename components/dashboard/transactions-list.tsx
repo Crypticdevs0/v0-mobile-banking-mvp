@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { ArrowUpRight, ArrowDownLeft } from "lucide-react"
 import Loader from "@/components/common/loader"
-import logger from '@/lib/logger'
 
 interface Transaction {
   id: string
@@ -23,11 +22,14 @@ export default function TransactionsList() {
   useEffect(() => {
     const fetchTransactions = async () => {
       try {
-        const response = await fetch("/api/transactions", { credentials: 'include' })
+        const token = localStorage.getItem("authToken")
+        const response = await fetch("/api/transactions", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
         const data = await response.json()
-        setTransactions(data.transactions || [])
+        setTransactions(data.transactions)
       } catch (error) {
-        logger.error("Failed to fetch transactions:", error)
+        console.error("Failed to fetch transactions:", error)
       } finally {
         setLoading(false)
       }

@@ -1,126 +1,191 @@
+import express from "express"
 import { createServer } from "http"
 import { Server } from "socket.io"
 import cors from "cors"
-import logger from "./logger.js"
 import jwt from "jsonwebtoken"
 import dotenv from "dotenv"
-import helmet from "helmet"
-import rateLimit from "express-rate-limit"
-import cookieParser from "cookie-parser"
-import csurf from "csurf"
 import { fineractService } from "./services/fineractService.js"
 import { SocketService } from "./services/socketService.js"
 import otpRouter from "./routes/otpAuth.ts"
-import supabaseAuthRouter from "./routes/supabaseAuth.ts"
-import { verifyToken } from "./middleware/auth.ts"
-import express from "express"
 
 dotenv.config()
 
-// Enforce required environment variables
-const requiredEnv = ["JWT_SECRET", "FINERACT_URL", "FINERACT_USERNAME", "FINERACT_PASSWORD"]
-const missing = requiredEnv.filter((k) => !process.env[k])
-if (missing.length) {
-  logger.error("Missing required environment variables:", missing.join(", "))
-  logger.error("Aborting server start - please set the required environment variables and restart.")
-  process.exit(1)
-}
-
-// Build allowlist for CORS / sockets
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || process.env.CLIENT_URL || "http://localhost:3000")
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean)
-
 const app = express()
 const httpServer = createServer(app)
-
-// Helmet for basic security headers and a sensible CSP
-app.use(helmet())
-app.use(helmet.contentSecurityPolicy({
-  directives: {
-    defaultSrc: ["'self'"],
-    scriptSrc: ["'self'", "'unsafe-inline'"],
-    connectSrc: ["'self'", ...allowedOrigins],
-    imgSrc: ["'self'", "data:"] ,
-    styleSrc: ["'self'", "'unsafe-inline'"],
-  },
-}))
-
-// Rate limiting for API abuse protection
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200, // limit each IP to 200 requests per windowMs
-  standardHeaders: true,
-  legacyHeaders: false,
-})
-
-app.use(apiLimiter)
-app.use(cookieParser())
-
-// CSRF protection (expose token via /api/csrf-token for clients)
-const csrfProtection = csurf({ cookie: true })
-app.get('/api/csrf-token', csrfProtection, (req, res) => {
-  res.json({ csrfToken: req.csrfToken() })
-})
-
-// Socket.io setup with origin validation
-// Prefer NEXT_PUBLIC_SOCKET_PATH for alignment with frontend/env exposure
-const SOCKET_PATH = process.env.NEXT_PUBLIC_SOCKET_PATH || process.env.SOCKET_PATH || "/socket.io"
 const io = new Server(httpServer, {
-  path: SOCKET_PATH,
   cors: {
-    origin: allowedOrigins,
+    origin: process.env.CLIENT_URL || "http://localhost:3000",
     credentials: true,
   },
-  transports: ["websocket"],
-})
-
-// Basic handshake origin check - reject unknown origins
-io.use((socket, next) => {
-  try {
-    const origin = socket.handshake.headers.origin
-    if (!origin || !allowedOrigins.includes(origin)) {
-      return next(new Error("Origin not allowed"))
-    }
-    next()
-  } catch (err) {
-    next(err)
-  }
 })
 
 const socketService = new SocketService(io)
 
 // Middleware
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Allow non-browser requests like curl/server-to-server when origin is undefined
-    if (!origin) return callback(null, true)
-    if (allowedOrigins.includes(origin)) return callback(null, true)
-    return callback(new Error('CORS policy violation'))
-  },
-  credentials: true,
-}
-app.use(cors(corsOptions))
+app.use(cors())
 app.use(express.json())
 
-// Logger middleware (keep, do not expose sensitive data)
+// Logger middleware
 app.use((req, res, next) => {
-  logger.info(`[${new Date().toISOString()}] ${req.method} ${req.path}`)
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`)
   next()
 })
 
-// Mount Supabase-backed auth routes (signup/login) and the OTP router with CSRF protection
-app.use("/api/auth", csrfProtection, supabaseAuthRouter)
-app.use("/api/auth", csrfProtection, otpRouter)
-// Mount deposits router to handle POST /api/deposits if present
-try {
-  // require optional router only if file exists
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const depositsRouter = require("./routes/deposits.ts").default
-  app.use("/api", csrfProtection, depositsRouter)
-} catch (e) {
-  logger.info('No deposits router found, skipping mount')
+app.use("/api/auth", otpRouter)
+
+// ===== ===== Routes =====
+app.post("/api/auth/signup", async (req, res) => {
+  try {
+    const { email, password, firstName, lastName } = req.body
+
+    // Validate input
+    if (!email || !password || !firstName || !lastName) {
+      return res.status(400).json({ error: "Missing required fields" })
+    }
+
+    // Create Fineract client
+    const clientResponse = await fetch(
+      `${process.env.FINERACT_URL}/fineract-provider/api/v1/clients?tenantId=${process.env.FINERACT_TENANT}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${Buffer.from(`${process.env.FINERACT_USERNAME}:${process.env.FINERACT_PASSWORD}`).toString("base64")}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firstname: firstName,
+          lastname: lastName,
+          email: email,
+          mobileNo: "1234567890",
+          dateFormat: "dd MMMM yyyy",
+          locale: "en",
+          active: true,
+          activationDate: new Date().toISOString().split("T")[0],
+        }),
+      },
+    )
+
+    const clientData = await clientResponse.json()
+
+    if (!clientResponse.ok) {
+      return res.status(400).json({ error: clientData.defaultUserMessage || "Failed to create client" })
+    }
+
+    // Create checking account for client
+    const accountResponse = await fetch(
+      `${process.env.FINERACT_URL}/fineract-provider/api/v1/savingsaccounts?tenantId=${process.env.FINERACT_TENANT}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${Buffer.from(`${process.env.FINERACT_USERNAME}:${process.env.FINERACT_PASSWORD}`).toString("base64")}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          clientId: clientData.resourceId,
+          productId: Number.parseInt(process.env.FINERACT_PRODUCT_ID || "1"),
+          dateFormat: "dd MMMM yyyy",
+          locale: "en",
+          submittedOnDate: new Date().toISOString().split("T")[0],
+        }),
+      },
+    )
+
+    const accountData = await accountResponse.json()
+
+    if (!accountResponse.ok) {
+      return res.status(400).json({ error: accountData.defaultUserMessage || "Failed to create account" })
+    }
+
+    // Create JWT token
+    const token = jwt.sign(
+      {
+        userId: clientData.resourceId,
+        email,
+        accountId: accountData.resourceId,
+      },
+      process.env.JWT_SECRET || "your-secret-key",
+      { expiresIn: "7d" },
+    )
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: clientData.resourceId,
+        email,
+        firstName,
+        lastName,
+        accountId: accountData.resourceId,
+      },
+    })
+  } catch (error) {
+    console.error("Signup error:", error)
+    res.status(500).json({ error: "Signup failed" })
+  }
+})
+
+app.post("/api/auth/login", async (req, res) => {
+  try {
+    const { email, password } = req.body
+
+    if (!email || !password) {
+      return res.status(400).json({ error: "Email and password required" })
+    }
+
+    // For demo: validate against seed data
+    const seedUsers = {
+      "alice@bank.com": { id: 1, name: "Alice", accountId: 1 },
+      "bob@bank.com": { id: 2, name: "Bob", accountId: 2 },
+      "charlie@bank.com": { id: 3, name: "Charlie", accountId: 3 },
+    }
+
+    const user = seedUsers[email]
+
+    if (!user || password !== "password123") {
+      return res.status(401).json({ error: "Invalid credentials" })
+    }
+
+    const token = jwt.sign(
+      {
+        userId: user.id,
+        email,
+        accountId: user.accountId,
+      },
+      process.env.JWT_SECRET || "your-secret-key",
+      { expiresIn: "7d" },
+    )
+
+    res.json({
+      success: true,
+      token,
+      user: {
+        id: user.id,
+        email,
+        name: user.name,
+        accountId: user.accountId,
+      },
+    })
+  } catch (error) {
+    console.error("Login error:", error)
+    res.status(500).json({ error: "Login failed" })
+  }
+})
+
+// ===== Auth Middleware =====
+const verifyToken = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1]
+
+  if (!token) {
+    return res.status(401).json({ error: "No token provided" })
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "your-secret-key")
+    req.user = decoded
+    next()
+  } catch (error) {
+    res.status(401).json({ error: "Invalid token" })
+  }
 }
 
 // ===== Account Routes =====
@@ -134,7 +199,7 @@ app.get("/api/accounts/balance", verifyToken, async (req, res) => {
       ...balance,
     })
   } catch (error) {
-    logger.error("Error fetching balance:", error)
+    console.error("Error fetching balance:", error)
     res.status(500).json({ error: "Failed to fetch balance" })
   }
 })
@@ -159,6 +224,7 @@ app.post("/api/transfers", verifyToken, async (req, res) => {
 
     const transfer = await fineractService.transferFunds(req.user.accountId, recipientAccountId, amount)
 
+    // Emit transfer completion to sender
     socketService.emitTransferSent(req.user.userId, {
       id: transfer.transactionId,
       toAccountId: recipientAccountId,
@@ -167,6 +233,8 @@ app.post("/api/transfers", verifyToken, async (req, res) => {
       status: "completed",
     })
 
+    // Emit transfer received notification to recipient (demo: hardcoded userId mapping)
+    // In production, query database to find recipient's userId from accountId
     const recipientUserIdMap = {
       1: 1,
       2: 2,
@@ -183,19 +251,21 @@ app.post("/api/transfers", verifyToken, async (req, res) => {
         status: "completed",
       })
 
+      // Update recipient's balance in real-time
       try {
         const recipientBalance = await fineractService.getAccountBalance(recipientAccountId)
         socketService.emitBalanceUpdate(recipientUserId, recipientBalance.balance, recipientAccountId)
       } catch (error) {
-        logger.error("Error fetching recipient balance:", error)
+        console.error("Error fetching recipient balance:", error)
       }
     }
 
+    // Update sender's balance
     try {
       const senderBalance = await fineractService.getAccountBalance(req.user.accountId)
       socketService.emitBalanceUpdate(req.user.userId, senderBalance.balance, req.user.accountId)
     } catch (error) {
-      logger.error("Error fetching sender balance:", error)
+      console.error("Error fetching sender balance:", error)
     }
 
     res.json({
@@ -203,7 +273,7 @@ app.post("/api/transfers", verifyToken, async (req, res) => {
       transfer,
     })
   } catch (error) {
-    logger.error("Transfer error:", error)
+    console.error("Transfer error:", error)
     res.status(500).json({ error: error.message || "Transfer failed" })
   }
 })
@@ -213,6 +283,7 @@ app.get("/api/transactions", verifyToken, async (req, res) => {
   try {
     const transactions = await fineractService.getAccountTransactions(req.user.accountId)
 
+    // Transform Fineract transaction format to app format
     const formattedTransactions = (transactions.transactionItems || []).map((tx) => ({
       id: tx.id,
       type: tx.type?.value === "DEPOSIT" ? "received" : "sent",
@@ -230,14 +301,14 @@ app.get("/api/transactions", verifyToken, async (req, res) => {
       },
     })
   } catch (error) {
-    logger.error("Error fetching transactions:", error)
+    console.error("Error fetching transactions:", error)
     res.status(500).json({ error: "Failed to fetch transactions" })
   }
 })
 
 // ===== Socket.io Events =====
 io.on("connection", (socket) => {
-  logger.info(`[Socket] New connection: ${socket.id}`)
+  console.log(`[Socket] New connection: ${socket.id}`)
 
   socket.on("user:login", (userId) => {
     socketService.registerUser(socket.id, userId)
@@ -250,12 +321,12 @@ io.on("connection", (socket) => {
 
   socket.on("subscribe:balance", (userId) => {
     socket.join(`balance:${userId}`)
-    logger.info(`[Socket] User ${userId} subscribed to balance updates`)
+    console.log(`[Socket] User ${userId} subscribed to balance updates`)
   })
 
   socket.on("subscribe:notifications", (userId) => {
     socket.join(`notifications:${userId}`)
-    logger.info(`[Socket] User ${userId} subscribed to notifications`)
+    console.log(`[Socket] User ${userId} subscribed to notifications`)
   })
 
   socket.on("request:balance", async (userId, accountId) => {
@@ -263,17 +334,18 @@ io.on("connection", (socket) => {
       const balance = await fineractService.getAccountBalance(accountId)
       socketService.emitBalanceUpdate(userId, balance.balance, accountId)
     } catch (error) {
-      logger.error("Error fetching balance for socket:", error)
+      console.error("Error fetching balance for socket:", error)
       socket.emit("error:balance", { error: "Failed to fetch balance" })
     }
   })
 
   socket.on("disconnect", () => {
+    // Try to find userId from user data if available
     const userId = socket.handshake.auth?.userId
     if (userId) {
       socketService.unregisterUser(socket.id, userId)
     }
-    logger.info(`[Socket] User disconnected: ${socket.id}`)
+    console.log(`[Socket] User disconnected: ${socket.id}`)
   })
 })
 
@@ -284,12 +356,12 @@ app.get("/api/health", (req, res) => {
 
 // Error handling
 app.use((err, req, res, next) => {
-  logger.error(err)
+  console.error(err)
   res.status(500).json({ error: "Internal server error" })
 })
 
-const PORT = process.env.PORT || 4000
+const PORT = process.env.PORT || 3001
 httpServer.listen(PORT, () => {
-  logger.info(`Banking server running on port ${PORT}`)
-  logger.info(`Socket.io listening for connections at path ${SOCKET_PATH}`)
+  console.log(`Banking server running on port ${PORT}`)
+  console.log(`Socket.io listening for connections`)
 })

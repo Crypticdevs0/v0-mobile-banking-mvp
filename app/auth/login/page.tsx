@@ -24,23 +24,20 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      // Fetch CSRF token first
-      const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' })
-      if (!csrfRes.ok) throw new Error('Failed to obtain CSRF token')
-      const csrfData = await csrfRes.json()
-
       const response = await fetch("/api/auth/login", {
         method: "POST",
-        credentials: 'include',
-        headers: { "Content-Type": "application/json", "x-csrf-token": csrfData.csrfToken },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       })
 
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || "Login failed")
 
-      // Don't store token in localStorage; cookie is HttpOnly. Keep user in memory via auth hook.
-      router.push("/dashboard")
+      localStorage.setItem("authToken", data.token)
+      localStorage.setItem("user", JSON.stringify(data.user))
+      localStorage.setItem("userEmail", email)
+
+      router.push("/auth/otp-verification")
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -49,9 +46,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 flex items-center justify-center px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 flex items-center justify-center px-4 py-12">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-md w-full">
-        <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mb-6">
+        <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
           {/* Header */}
           <motion.div
             initial={{ scale: 0.8 }}
@@ -63,7 +60,7 @@ export default function LoginPage() {
           </motion.div>
 
           <div className="text-center mb-8">
-            <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Welcome Back</h1>
+            <h1 className="text-2xl font-bold text-slate-900 mb-2">Welcome Back</h1>
             <p className="text-slate-600">Sign in to access your account</p>
           </div>
 
@@ -104,7 +101,7 @@ export default function LoginPage() {
                 <Lock className="absolute left-3 top-3 w-5 h-5 text-slate-400" />
                 <Input
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••���•"
+                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => {
                     setPassword(e.target.value)
@@ -129,11 +126,16 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Demo credentials removed for security */}
+          {/* Demo Credentials */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <p className="text-xs font-semibold text-blue-900 mb-2">Demo Credentials:</p>
+            <p className="text-xs text-blue-700">Email: alice@bank.com</p>
+            <p className="text-xs text-blue-700">Password: password123</p>
+          </div>
 
           {/* Links */}
           <div className="space-y-3 text-center text-sm">
-            <a href="/auth/forgot-password" className="block text-blue-600 hover:underline">
+            <a href="#" className="block text-blue-600 hover:underline">
               Forgot password?
             </a>
           </div>

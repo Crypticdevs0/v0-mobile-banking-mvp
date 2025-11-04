@@ -4,7 +4,6 @@ import { motion } from "framer-motion"
 import { Bell, Settings, LogOut } from "lucide-react"
 import { useRouter } from "next/navigation"
 import Avatar from "@/components/common/avatar"
-import logger from '@/lib/logger'
 
 interface User {
   name?: string
@@ -15,13 +14,11 @@ interface User {
 export default function Header({ user }: { user: User }) {
   const router = useRouter()
 
-  const handleLogout = async () => {
-    try {
-      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
-    } catch (err) {
-      logger.error('Logout request failed', err)
-    }
-    router.push('/auth/login')
+  const handleLogout = () => {
+    localStorage.removeItem("authToken")
+    localStorage.removeItem("user")
+    localStorage.removeItem("userId")
+    router.push("/auth/login")
   }
 
   const container = {

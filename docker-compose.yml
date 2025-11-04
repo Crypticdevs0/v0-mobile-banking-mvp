@@ -1,44 +1,78 @@
 version: '3.8'
 
 services:
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    environment:
-      - NODE_ENV=development
-      - NEXT_PUBLIC_SUPABASE_URL
-      - NEXT_PUBLIC_SUPABASE_ANON_KEY
-    depends_on:
-      - backend
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "http://localhost:3000/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
   backend:
     build:
       context: .
-      dockerfile: backend/Dockerfile
+      dockerfile: Dockerfile.backend
     ports:
-      - "4000:4000"
+      - "3001:3001"
     environment:
-      - NODE_ENV=development
-      - PORT=4000
-      - SUPABASE_URL
-      - SUPABASE_ANON_KEY
-      - SUPABASE_SERVICE_ROLE_KEY
-    restart: unless-stopped
+      NODE_ENV: development
+      PORT: 3001
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+      FINERACT_URL: ${FINERACT_URL:-http://fineract:8080}
+      FINERACT_USERNAME: ${FINERACT_USERNAME:-mifos}
+      FINERACT_PASSWORD: ${FINERACT_PASSWORD}
+      FINERACT_TENANT: ${FINERACT_TENANT:-default}
+      FINERACT_PRODUCT_ID: ${FINERACT_PRODUCT_ID:-1}
+      JWT_SECRET: ${JWT_SECRET}
+      CLIENT_URL: http://localhost:3000
+    volumes:
+      - ./backend:/app/backend
+      - /app/node_modules
+    depends_on:
+      - db
+    networks:
+      - banking-network
     healthcheck:
-      test: ["CMD", "wget", "--spider", "http://localhost:4000/"]
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: .
+      target: frontend-builder
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      NEXT_PUBLIC_SOCKET_URL: http://localhost:3001
+    volumes:
+      - ./app:/app/app
+      - ./components:/app/components
+      - ./hooks:/app/hooks
+      - ./lib:/app/lib
+    depends_on:
+      - backend
+    networks:
+      - banking-network
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: premier_banking
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts:/docker-entrypoint-initdb.d
+    networks:
+      - banking-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 networks:
-  default:
-    name: app-network
+  banking-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
