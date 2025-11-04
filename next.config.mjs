@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  poweredByHeader: false,
   compress: true,
   output: 'standalone',
   eslint: {
@@ -10,8 +11,9 @@ const nextConfig = {
     ignoreBuildErrors: false,
   },
   images: {
-    unoptimized: true,
+    unoptimized: false,
   },
+  productionBrowserSourceMaps: false,
   experimental: {
     optimizePackageImports: [
       'lucide-react',
