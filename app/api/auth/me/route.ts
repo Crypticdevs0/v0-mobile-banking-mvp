@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import logger from '@/lib/logger'
 import { createClient } from '@/lib/supabase/server'
+import { incrementMe401 } from '@/lib/auth-metrics'
 
 export async function GET() {
   try {
@@ -9,11 +10,15 @@ export async function GET() {
     const { data: userData, error: userError } = await supabase.auth.getUser()
     if (userError) {
       logger.warn('Auth getUser error', userError.message || userError)
+      incrementMe401()
       return NextResponse.json({ user: null }, { status: 401 })
     }
 
     const user = userData?.user ?? null
-    if (!user) return NextResponse.json({ user: null }, { status: 401 })
+    if (!user) {
+      incrementMe401()
+      return NextResponse.json({ user: null }, { status: 401 })
+    }
 
     // Try to fetch a profile row if the table exists
     try {
