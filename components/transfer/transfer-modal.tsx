@@ -7,10 +7,12 @@ export default function TransferModal({
   isOpen,
   onClose,
   onTransferSuccess,
+  userId,
 }: {
   isOpen: boolean
   onClose: () => void
   onTransferSuccess: (amount: number) => void
+  userId: string
 }) {
   return (
     <AnimatePresence>
@@ -33,20 +35,21 @@ export default function TransferModal({
             transition={{ type: "spring", damping: 25 }}
             className="fixed bottom-0 left-0 right-0 z-50 max-w-lg mx-auto"
           >
-            <div className="card rounded-t-3xl border-b-0 p-6 max-h-[90vh] overflow-y-auto">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">Send Money</h2>
+            <div className="card rounded-t-3xl border-b-0 p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <h2 className="text-xl sm:text-2xl font-bold">Send Money</h2>
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={onClose}
-                  className="p-2 hover:bg-surface-hover rounded-lg"
+                  className="p-2 hover:bg-muted rounded-lg"
                 >
-                  <X size={24} />
+                  <X size={20} className="sm:w-6 sm:h-6" />
                 </motion.button>
               </div>
 
               <TransferForm
+                userId={userId}
                 onSuccess={(amount) => {
                   onTransferSuccess(amount)
                   onClose()

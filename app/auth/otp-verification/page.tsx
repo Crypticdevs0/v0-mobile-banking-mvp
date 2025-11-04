@@ -6,9 +6,11 @@ import { motion } from "framer-motion"
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp"
 import { Button } from "@/components/ui/button"
 import { Mail, Clock, CheckCircle } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 
 export default function OTPVerificationPage() {
   const router = useRouter()
+  const supabase = createClient()
   const [otp, setOtp] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -34,24 +36,40 @@ export default function OTPVerificationPage() {
 
     setLoading(true)
     try {
-      const response = await fetch("/api/auth/verify-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ otp, email: userEmail }),
-      })
+      // Verify OTP in Supabase
+      const { data: otpData, error: otpError } = await supabase
+        .from("otp_codes")
+        .select("*")
+        .eq("email", userEmail)
+        .eq("code", otp)
+        .single()
 
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.error || "Verification failed")
+      if (otpError || !otpData) {
+        throw new Error("Invalid or expired OTP code")
+      }
+
+      // Check if OTP is expired
+      if (new Date(otpData.expires_at) < new Date()) {
+        throw new Error("OTP code has expired")
+      }
+
+      // Mark OTP as verified
+      await supabase.from("otp_codes").update({ verified_at: new Date().toISOString() }).eq("id", otpData.id)
 
       setVerified(true)
-      localStorage.setItem("accountNumber", data.accountNumber)
-      localStorage.setItem("routingNumber", data.routingNumber)
+
+      // Generate account and routing numbers
+      const accountNumber = `${Math.floor(100000000 + Math.random() * 900000000)}`
+      const routingNumber = "021000021"
+
+      localStorage.setItem("accountNumber", accountNumber)
+      localStorage.setItem("routingNumber", routingNumber)
 
       setTimeout(() => {
         router.push("/dashboard")
       }, 2000)
     } catch (err: any) {
-      setError(err.message)
+      setError(err.message || "Verification failed")
     } finally {
       setLoading(false)
     }
@@ -59,13 +77,25 @@ export default function OTPVerificationPage() {
 
   const handleResend = async () => {
     try {
-      await fetch("/api/auth/resend-otp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: userEmail }),
+      // Generate new OTP
+      const newOtp = Math.floor(100000 + Math.random() * 900000).toString()
+      const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString()
+
+      // Delete old OTP codes for this email
+      await supabase.from("otp_codes").delete().eq("email", userEmail)
+
+      // Insert new OTP
+      await supabase.from("otp_codes").insert({
+        email: userEmail,
+        code: newOtp,
+        expires_at: expiresAt,
+        attempts: 0,
+        max_attempts: 3,
       })
+
       setTimeLeft(300)
       setError("")
+      setOtp("")
     } catch (err) {
       setError("Failed to resend OTP")
     }
@@ -81,12 +111,12 @@ export default function OTPVerificationPage() {
             transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
             className="mb-6"
           >
-            <CheckCircle className="w-20 h-20 text-green-600 mx-auto" />
+            <CheckCircle className="w-16 h-16 sm:w-20 sm:h-20 text-green-600 mx-auto" />
           </motion.div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Account Verified!</h1>
-          <p className="text-slate-600 mb-8">Your Premier America account is ready to use.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Account Verified!</h1>
+          <p className="text-sm sm:text-base text-slate-600 mb-8">Your Premier America account is ready to use.</p>
           <motion.div animate={{ opacity: [1, 0.5, 1] }} transition={{ repeat: Number.POSITIVE_INFINITY, duration: 2 }}>
-            <p className="text-sm text-slate-600">Redirecting to your dashboard...</p>
+            <p className="text-xs sm:text-sm text-slate-600">Redirecting to your dashboard...</p>
           </motion.div>
         </motion.div>
       </div>
@@ -94,28 +124,30 @@ export default function OTPVerificationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 flex items-center justify-center px-4 py-8 sm:py-12">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-md w-full">
-        <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="mb-6">
-            <Mail className="w-16 h-16 text-blue-600 mx-auto" />
+        <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 text-center">
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="mb-4 sm:mb-6">
+            <Mail className="w-12 h-12 sm:w-16 sm:h-16 text-blue-600 mx-auto" />
           </motion.div>
 
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">Verify Your Email</h1>
-          <p className="text-slate-600 mb-8">We sent a 6-digit code to</p>
-          <p className="font-semibold text-slate-900 mb-8 break-all">{userEmail}</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Verify Your Email</h1>
+          <p className="text-sm sm:text-base text-slate-600 mb-4 sm:mb-8">We sent a 6-digit code to</p>
+          <p className="font-semibold text-slate-900 mb-6 sm:mb-8 break-all text-sm sm:text-base">{userEmail}</p>
 
-          <div className="mb-8">
-            <label className="block text-sm font-medium text-slate-900 mb-4">Enter verification code</label>
+          <div className="mb-6 sm:mb-8">
+            <label className="block text-xs sm:text-sm font-medium text-slate-900 mb-3 sm:mb-4">
+              Enter verification code
+            </label>
             <div className="flex justify-center">
               <InputOTP value={otp} onChange={setOtp} maxLength={6}>
                 <InputOTPGroup>
-                  <InputOTPSlot index={0} />
-                  <InputOTPSlot index={1} />
-                  <InputOTPSlot index={2} />
-                  <InputOTPSlot index={3} />
-                  <InputOTPSlot index={4} />
-                  <InputOTPSlot index={5} />
+                  <InputOTPSlot index={0} className="w-10 h-10 sm:w-12 sm:h-12 text-base sm:text-lg" />
+                  <InputOTPSlot index={1} className="w-10 h-10 sm:w-12 sm:h-12 text-base sm:text-lg" />
+                  <InputOTPSlot index={2} className="w-10 h-10 sm:w-12 sm:h-12 text-base sm:text-lg" />
+                  <InputOTPSlot index={3} className="w-10 h-10 sm:w-12 sm:h-12 text-base sm:text-lg" />
+                  <InputOTPSlot index={4} className="w-10 h-10 sm:w-12 sm:h-12 text-base sm:text-lg" />
+                  <InputOTPSlot index={5} className="w-10 h-10 sm:w-12 sm:h-12 text-base sm:text-lg" />
                 </InputOTPGroup>
               </InputOTP>
             </div>
@@ -125,25 +157,26 @@ export default function OTPVerificationPage() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg"
+              className="mb-4 sm:mb-6 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg"
             >
-              <p className="text-sm text-red-700">{error}</p>
+              <p className="text-xs sm:text-sm text-red-700">{error}</p>
             </motion.div>
           )}
 
           <Button
             onClick={handleVerify}
             disabled={loading || otp.length !== 6}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white mb-4 h-12"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white mb-4 h-10 sm:h-12 text-sm sm:text-base"
           >
             {loading ? "Verifying..." : "Verify Code"}
           </Button>
 
-          <div className="flex items-center justify-between text-sm text-slate-600 mb-4">
+          <div className="flex items-center justify-between text-xs sm:text-sm text-slate-600 mb-4">
             <span>Didn't receive code?</span>
             {timeLeft > 0 ? (
               <span className="flex items-center gap-1">
-                <Clock className="w-4 h-4" /> {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, "0")}
+                <Clock className="w-3 h-3 sm:w-4 sm:h-4" /> {Math.floor(timeLeft / 60)}:
+                {String(timeLeft % 60).padStart(2, "0")}
               </span>
             ) : (
               <button onClick={handleResend} className="text-blue-600 hover:underline font-semibold">
@@ -153,7 +186,7 @@ export default function OTPVerificationPage() {
           </div>
         </div>
 
-        <p className="text-center text-sm text-slate-600 mt-6">
+        <p className="text-center text-xs sm:text-sm text-slate-600 mt-4 sm:mt-6">
           By verifying, you confirm you're the account owner and accept our terms.
         </p>
       </motion.div>
