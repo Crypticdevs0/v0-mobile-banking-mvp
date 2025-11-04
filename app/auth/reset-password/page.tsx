@@ -71,6 +71,12 @@ export default function ResetPasswordPage() {
           setError("Invalid or expired reset link. Please request a new one.")
         }
       } catch (e: any) {
+        // Log token exchange failures for telemetry
+        try {
+          await fetch('/api/auth/log-token-failure', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason: String(e?.message || e) }) })
+        } catch {
+          // ignore logging errors
+        }
         if (!cancelled) setError(e?.message || "Unable to verify reset link. Try requesting a new one.")
       }
     }
@@ -97,12 +103,18 @@ export default function ResetPasswordPage() {
 
     setLoading(true)
     try {
-      const { error } = await supabase.auth.updateUser({ password })
-      if (error) throw error
-      setMessage("Password updated. You can now sign in.")
-      setTimeout(() => router.push("/auth/login"), 1500)
+      const res = await fetch('/api/auth/update-password', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || 'Failed to update password')
+      setMessage('Password updated. You can now sign in.')
+      setTimeout(() => router.push('/auth/login'), 1500)
     } catch (e: any) {
-      setError(e?.message || "Failed to update password.")
+      setError(e?.message || 'Failed to update password.')
     } finally {
       setLoading(false)
     }
