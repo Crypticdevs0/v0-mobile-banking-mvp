@@ -475,22 +475,22 @@ export default function Landing() {
               <h3 className="font-bold text-white mb-4">Company</h3>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="/about" className="hover:text-white transition">
                     About Us
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="/careers" className="hover:text-white transition">
                     Careers
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="/press" className="hover:text-white transition">
                     Press
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="/blog" className="hover:text-white transition">
                     Blog
                   </a>
                 </li>
@@ -500,22 +500,22 @@ export default function Landing() {
               <h3 className="font-bold text-white mb-4">Products</h3>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="/products/checking" className="hover:text-white transition">
                     Checking
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="/products/savings" className="hover:text-white transition">
                     Savings
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="/products/investing" className="hover:text-white transition">
                     Investing
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="/products/business" className="hover:text-white transition">
                     Business
                   </a>
                 </li>
@@ -525,22 +525,22 @@ export default function Landing() {
               <h3 className="font-bold text-white mb-4">Support</h3>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="/help" className="hover:text-white transition">
                     Help Center
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="/contact" className="hover:text-white transition">
                     Contact Us
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="/security" className="hover:text-white transition">
                     Security
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="/feedback" className="hover:text-white transition">
                     Feedback
                   </a>
                 </li>
@@ -550,22 +550,22 @@ export default function Landing() {
               <h3 className="font-bold text-white mb-4">Legal</h3>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="/terms" className="hover:text-white transition">
                     Terms of Service
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="/privacy" className="hover:text-white transition">
                     Privacy Policy
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="/disclosures" className="hover:text-white transition">
                     Disclosures
                   </a>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition">
+                  <a href="/fdic" className="hover:text-white transition">
                     FDIC Insurance
                   </a>
                 </li>

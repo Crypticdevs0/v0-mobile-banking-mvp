@@ -133,7 +133,7 @@ export default function LoginPage() {
 
           {/* Links */}
           <div className="space-y-3 text-center text-sm">
-            <a href="#" className="block text-blue-600 hover:underline">
+            <a href="/auth/forgot-password" className="block text-blue-600 hover:underline">
               Forgot password?
             </a>
           </div>
