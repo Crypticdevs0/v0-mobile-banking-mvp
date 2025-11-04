@@ -1,0 +1,55 @@
+{
+  "name": "premier-america-banking",
+  "description": "Premier America Credit Union Mobile Banking MVP",
+  "repository": "https://github.com/hybeprojects/v0-mobile-banking-mvp",
+  "keywords": ["banking", "fintech", "nodejs", "react"],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "env": {
+    "SUPABASE_URL": {
+      "description": "Supabase project URL"
+    },
+    "SUPABASE_SERVICE_ROLE_KEY": {
+      "description": "Supabase service role key"
+    },
+    "FINERACT_URL": {
+      "description": "Fineract API URL"
+    },
+    "FINERACT_USERNAME": {
+      "description": "Fineract username"
+    },
+    "FINERACT_PASSWORD": {
+      "description": "Fineract password"
+    },
+    "FINERACT_TENANT": {
+      "description": "Fineract tenant"
+    },
+    "FINERACT_PRODUCT_ID": {
+      "value": "1"
+    },
+    "JWT_SECRET": {
+      "description": "JWT secret for token signing"
+    },
+    "NODE_ENV": {
+      "value": "production"
+    },
+    "NPM_CONFIG_PRODUCTION": {
+      "value": "false"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "standard-1x"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-postgresql:standard-0",
+      "as": "DATABASE"
+    }
+  ]
+}

@@ -7,9 +7,11 @@ import { ChevronRight, ChevronLeft, Upload, CreditCard } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
+import { createClient } from "@/lib/supabase/client"
 
 export default function SignUpPage() {
   const router = useRouter()
+  const supabase = createClient()
   const [step, setStep] = useState(0)
   const [accountType, setAccountType] = useState<"checking" | "business" | "invest" | "joint" | null>(null)
   const [loading, setLoading] = useState(false)
@@ -147,26 +149,40 @@ export default function SignUpPage() {
     if (!validateStep()) return
     setLoading(true)
     try {
-      // Fetch CSRF token first
-      const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' })
-      if (!csrfRes.ok) throw new Error('Failed to obtain CSRF token')
-      const csrfData = await csrfRes.json()
-
-      const response = await fetch("/api/auth/signup", {
-        method: "POST",
-        credentials: 'include',
-        headers: { "Content-Type": "application/json", "x-csrf-token": csrfData.csrfToken },
-        body: JSON.stringify({
-          ...formData,
-          accountType,
-        }),
+      // Sign up with Supabase
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
+          data: {
+            first_name: formData.firstName,
+            last_name: formData.lastName,
+            phone: formData.phone,
+            account_type: accountType,
+          },
+        },
       })
 
-      const data = await response.json()
-      if (!response.ok) throw new Error(data.error || "Signup failed")
+      if (authError) throw authError
 
-      // Cookie contains auth token; do not store in localStorage
-      router.push("/auth/otp-verification")
+      if (authData.user) {
+        // Create user profile in Supabase
+        const { error: profileError } = await supabase.from("users").insert({
+          id: authData.user.id,
+          email: formData.email,
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+        })
+
+        if (profileError) {
+          console.error("Profile creation error:", profileError)
+        }
+
+        // Store email for OTP verification
+        localStorage.setItem("userEmail", formData.email)
+        router.push("/auth/otp-verification")
+      }
     } catch (err: any) {
       setError(err.message || "Signup failed. Please try again.")
     } finally {
@@ -181,8 +197,8 @@ export default function SignUpPage() {
       case 0:
         return (
           <motion.div key="step0" variants={containerVariants} className="space-y-4">
-            <p className="text-slate-600 mb-6">Select the account type that best fits your needs.</p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <p className="text-slate-600 mb-6 text-sm">Select the account type that best fits your needs.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {accountTypes.map((type) => (
                 <motion.button
                   key={type.id}
@@ -192,15 +208,15 @@ export default function SignUpPage() {
                   }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className={`p-6 border-2 rounded-xl text-left transition ${
+                  className={`p-4 sm:p-6 border-2 rounded-xl text-left transition ${
                     accountType === type.id
                       ? "border-blue-600 bg-blue-50"
                       : "border-slate-200 bg-white hover:border-slate-300"
                   }`}
                 >
-                  <div className="text-3xl mb-2">{type.icon}</div>
-                  <div className="font-bold text-slate-900">{type.name}</div>
-                  <div className="text-sm text-slate-600 mt-1">{type.desc}</div>
+                  <div className="text-2xl sm:text-3xl mb-2">{type.icon}</div>
+                  <div className="font-bold text-slate-900 text-sm sm:text-base">{type.name}</div>
+                  <div className="text-xs sm:text-sm text-slate-600 mt-1">{type.desc}</div>
                 </motion.button>
               ))}
             </div>
@@ -208,17 +224,19 @@ export default function SignUpPage() {
         )
       case 1:
         return (
-          <motion.div key="step1" variants={containerVariants} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <motion.div key="step1" variants={containerVariants} className="space-y-3 sm:space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <Input
                 placeholder="First Name"
                 value={formData.firstName}
                 onChange={(e) => handleInputChange("firstName", e.target.value)}
+                className="text-sm"
               />
               <Input
                 placeholder="Last Name"
                 value={formData.lastName}
                 onChange={(e) => handleInputChange("lastName", e.target.value)}
+                className="text-sm"
               />
             </div>
             <Input
@@ -226,16 +244,19 @@ export default function SignUpPage() {
               placeholder="Date of Birth"
               value={formData.dateOfBirth}
               onChange={(e) => handleInputChange("dateOfBirth", e.target.value)}
+              className="text-sm"
             />
             <Input
               placeholder="SSN (XXX-XX-XXXX)"
               value={formData.ssn}
               onChange={(e) => handleInputChange("ssn", e.target.value)}
+              className="text-sm"
             />
             <Input
               placeholder="Driver's License #"
               value={formData.driversLicense}
               onChange={(e) => handleInputChange("driversLicense", e.target.value)}
+              className="text-sm"
             />
             {accountType === "business" && (
               <>
@@ -243,16 +264,19 @@ export default function SignUpPage() {
                   placeholder="Business Name"
                   value={formData.businessName}
                   onChange={(e) => handleInputChange("businessName", e.target.value)}
+                  className="text-sm"
                 />
                 <Input
                   placeholder="EIN"
                   value={formData.ein}
                   onChange={(e) => handleInputChange("ein", e.target.value)}
+                  className="text-sm"
                 />
                 <Input
                   placeholder="Business Type"
                   value={formData.businessType}
                   onChange={(e) => handleInputChange("businessType", e.target.value)}
+                  className="text-sm"
                 />
               </>
             )}
@@ -260,56 +284,64 @@ export default function SignUpPage() {
         )
       case 2:
         return (
-          <motion.div key="step2" variants={containerVariants} className="space-y-4">
+          <motion.div key="step2" variants={containerVariants} className="space-y-3 sm:space-y-4">
             <Input
               type="email"
               placeholder="Email Address"
               value={formData.email}
               onChange={(e) => handleInputChange("email", e.target.value)}
+              className="text-sm"
             />
             <Input
               type="tel"
               placeholder="Phone Number"
               value={formData.phone}
               onChange={(e) => handleInputChange("phone", e.target.value)}
+              className="text-sm"
             />
           </motion.div>
         )
       case 3:
         return (
-          <motion.div key="step3" variants={containerVariants} className="space-y-4">
+          <motion.div key="step3" variants={containerVariants} className="space-y-3 sm:space-y-4">
             <Input
               placeholder="Street Address"
               value={formData.address}
               onChange={(e) => handleInputChange("address", e.target.value)}
+              className="text-sm"
             />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3 sm:gap-4">
               <Input
                 placeholder="City"
                 value={formData.city}
                 onChange={(e) => handleInputChange("city", e.target.value)}
+                className="text-sm"
               />
               <Input
                 placeholder="State"
                 value={formData.state}
                 onChange={(e) => handleInputChange("state", e.target.value)}
+                className="text-sm"
               />
             </div>
             <Input
               placeholder="ZIP Code"
               value={formData.zip}
               onChange={(e) => handleInputChange("zip", e.target.value)}
+              className="text-sm"
             />
           </motion.div>
         )
       case 4:
         return (
-          <motion.div key="step4" variants={containerVariants} className="space-y-6">
+          <motion.div key="step4" variants={containerVariants} className="space-y-4 sm:space-y-6">
             <div>
-              <label className="block text-sm font-medium text-slate-900 mb-3">ID Document</label>
-              <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-xl p-8 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition">
-                <Upload className="w-8 h-8 text-slate-400 mb-2" />
-                <span className="text-sm text-slate-600">{idFile ? idFile.name : "Upload ID document"}</span>
+              <label className="block text-xs sm:text-sm font-medium text-slate-900 mb-2 sm:mb-3">ID Document</label>
+              <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-xl p-6 sm:p-8 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition">
+                <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-slate-400 mb-2" />
+                <span className="text-xs sm:text-sm text-slate-600 text-center">
+                  {idFile ? idFile.name : "Upload ID document"}
+                </span>
                 <input
                   type="file"
                   accept="image/*,.pdf"
@@ -319,10 +351,12 @@ export default function SignUpPage() {
               </label>
             </div>
             <div>
-              <label className="block text-sm font-medium text-slate-900 mb-3">Liveness Verification</label>
-              <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-xl p-8 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition">
-                <Upload className="w-8 h-8 text-slate-400 mb-2" />
-                <span className="text-sm text-slate-600">
+              <label className="block text-xs sm:text-sm font-medium text-slate-900 mb-2 sm:mb-3">
+                Liveness Verification
+              </label>
+              <label className="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-xl p-6 sm:p-8 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition">
+                <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-slate-400 mb-2" />
+                <span className="text-xs sm:text-sm text-slate-600 text-center">
                   {livenessFile ? livenessFile.name : "Upload selfie or video"}
                 </span>
                 <input
@@ -337,26 +371,28 @@ export default function SignUpPage() {
         )
       case 5:
         return (
-          <motion.div key="step5" variants={containerVariants} className="space-y-4">
+          <motion.div key="step5" variants={containerVariants} className="space-y-3 sm:space-y-4">
             <Input
               type="password"
               placeholder="Password"
               value={formData.password}
               onChange={(e) => handleInputChange("password", e.target.value)}
+              className="text-sm"
             />
             <Input
               type="password"
               placeholder="Confirm Password"
               value={formData.confirmPassword}
               onChange={(e) => handleInputChange("confirmPassword", e.target.value)}
+              className="text-sm"
             />
             <p className="text-xs text-slate-600">Password must be at least 8 characters long</p>
           </motion.div>
         )
       case 6:
         return (
-          <motion.div key="step6" variants={containerVariants} className="space-y-4">
-            <div className="bg-slate-50 rounded-xl p-6 space-y-3">
+          <motion.div key="step6" variants={containerVariants} className="space-y-3 sm:space-y-4">
+            <div className="bg-slate-50 rounded-xl p-4 sm:p-6 space-y-2 sm:space-y-3 text-xs sm:text-sm">
               <p>
                 <strong>Account Type:</strong> {accountTypes.find((t) => t.id === accountType)?.name}
               </p>
@@ -370,20 +406,20 @@ export default function SignUpPage() {
                 <strong>Address:</strong> {formData.address}, {formData.city}, {formData.state} {formData.zip}
               </p>
             </div>
-            <label className="flex items-start gap-3 cursor-pointer">
+            <label className="flex items-start gap-2 sm:gap-3 cursor-pointer">
               <input
                 type="checkbox"
                 checked={formData.termsAccepted}
                 onChange={(e) => handleInputChange("termsAccepted", e.target.checked)}
                 className="mt-1"
               />
-              <span className="text-sm text-slate-600">
+              <span className="text-xs sm:text-sm text-slate-600">
                 I agree to the{" "}
-                <a href="/terms" className="text-blue-600 hover:underline">
+                <a href="#" className="text-blue-600 hover:underline">
                   Terms of Service
                 </a>{" "}
                 and{" "}
-                <a href="/privacy" className="text-blue-600 hover:underline">
+                <a href="#" className="text-blue-600 hover:underline">
                   Privacy Policy
                 </a>
               </span>
@@ -396,22 +432,26 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-teal-50 py-8 sm:py-12 px-4">
       <div className="max-w-md mx-auto">
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <CreditCard className="w-8 h-8 text-blue-600" />
-            <span className="text-2xl font-bold text-slate-900">Premier America</span>
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-8 sm:mb-12"
+        >
+          <div className="flex items-center justify-center gap-2 mb-3 sm:mb-4">
+            <CreditCard className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
+            <span className="text-xl sm:text-2xl font-bold text-slate-900">Premier America</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">Create Your Account</h1>
-          <p className="text-slate-600">
+          <p className="text-sm sm:text-base text-slate-600">
             Step {step + 1} of {steps.length}
           </p>
         </motion.div>
 
         {/* Progress Bar */}
-        <div className="mb-8 space-y-2">
-          <div className="flex gap-2">
+        <div className="mb-6 sm:mb-8 space-y-2">
+          <div className="flex gap-1 sm:gap-2">
             {steps.map((_, idx) => (
               <motion.div
                 key={idx}
@@ -421,13 +461,13 @@ export default function SignUpPage() {
             ))}
           </div>
           <div className="text-center">
-            <h2 className="font-semibold text-slate-900">{steps[step].title}</h2>
-            <p className="text-sm text-slate-600">{steps[step].subtitle}</p>
+            <h2 className="font-semibold text-slate-900 text-sm sm:text-base">{steps[step].title}</h2>
+            <p className="text-xs sm:text-sm text-slate-600">{steps[step].subtitle}</p>
           </div>
         </div>
 
         {/* Form Content */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mb-6">
+        <div className="bg-white rounded-2xl shadow-lg p-6 sm:p-8 mb-4 sm:mb-6">
           <AnimatePresence mode="wait">{renderStep()}</AnimatePresence>
 
           {/* Error Message */}
@@ -435,29 +475,34 @@ export default function SignUpPage() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg"
+              className="mt-4 p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg"
             >
-              <p className="text-sm text-red-700">{error}</p>
+              <p className="text-xs sm:text-sm text-red-700">{error}</p>
             </motion.div>
           )}
         </div>
 
         {/* Navigation Buttons */}
-        <div className="flex gap-4">
-          <Button onClick={handleBack} variant="outline" disabled={step === 0} className="flex-1 bg-transparent">
-            <ChevronLeft className="w-4 h-4 mr-2" /> Back
+        <div className="flex gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <Button
+            onClick={handleBack}
+            variant="outline"
+            disabled={step === 0}
+            className="flex-1 bg-transparent text-sm sm:text-base h-10 sm:h-11"
+          >
+            <ChevronLeft className="w-4 h-4 mr-1 sm:mr-2" /> Back
           </Button>
           <Button
             onClick={step === steps.length - 1 ? handleSubmit : handleNext}
             disabled={loading}
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white"
+            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-sm sm:text-base h-10 sm:h-11"
           >
             {loading ? "Creating..." : step === steps.length - 1 ? "Create Account" : "Continue"}
-            {step < steps.length - 1 && <ChevronRight className="w-4 h-4 ml-2" />}
+            {step < steps.length - 1 && <ChevronRight className="w-4 h-4 ml-1 sm:ml-2" />}
           </Button>
         </div>
 
-        <p className="text-center text-sm text-slate-600 mt-6">
+        <p className="text-center text-xs sm:text-sm text-slate-600">
           Already have an account?{" "}
           <Link href="/auth/login" className="text-blue-600 hover:underline font-semibold">
             Sign In

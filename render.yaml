@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: premier-banking-backend
+    env: node
+    buildCommand: npm install
+    startCommand: node backend/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3001
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: FINERACT_URL
+        sync: false
+      - key: FINERACT_USERNAME
+        sync: false
+      - key: FINERACT_PASSWORD
+        sync: false
+      - key: FINERACT_TENANT
+        sync: false
+      - key: FINERACT_PRODUCT_ID
+        value: "1"
+      - key: JWT_SECRET
+        sync: false
+      - key: CLIENT_URL
+        sync: false
+    healthCheckPath: /api/health
+    autoDeploy: true
+
+  - type: web
+    name: premier-banking-frontend
+    env: node
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false
+      - key: NEXT_PUBLIC_SOCKET_URL
+        value: https://premier-banking-backend.onrender.com
+    healthCheckPath: /
+    autoDeploy: true

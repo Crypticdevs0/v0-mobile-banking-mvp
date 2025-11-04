@@ -3,27 +3,17 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { CreditCard, ArrowRight, Check, Users, Zap, Shield, ChevronDown, Menu, X } from "lucide-react"
+import { CreditCard, ArrowRight, Check, Users, Zap, Shield, ChevronDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export default function Landing() {
   const router = useRouter()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [activeTab, setActiveTab] = useState<number | null>(null)
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<string | null>(null)
 
   useEffect(() => {
-    let mounted = true
-    ;(async () => {
-      try {
-        const res = await fetch('/api/auth/me', { credentials: 'include' })
-        if (!mounted) return
-        setIsLoggedIn(res.ok)
-      } catch (err) {
-        setIsLoggedIn(false)
-      }
-    })()
-    return () => { mounted = false }
+    const token = localStorage.getItem("authToken")
+    setIsLoggedIn(!!token)
   }, [])
 
   const handleGetStarted = () => {
@@ -127,7 +117,7 @@ export default function Landing() {
     <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50">
       {/* Navigation */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -150,8 +140,7 @@ export default function Landing() {
               Support
             </a>
           </div>
-          {/* Desktop auth/actions */}
-          <div className="hidden md:flex items-center gap-3">
+          <div className="flex items-center gap-3">
             {isLoggedIn ? (
               <Button onClick={() => router.push("/dashboard")} className="bg-blue-600 hover:bg-blue-700">
                 Dashboard
@@ -167,68 +156,6 @@ export default function Landing() {
               </>
             )}
           </div>
-          {/* Mobile hamburger */}
-          <button
-            aria-label="Open menu"
-            className="md:hidden p-2 rounded-lg border border-slate-200 hover:bg-slate-50"
-            onClick={() => setMobileMenuOpen((v) => !v)}
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6 text-slate-900" /> : <Menu className="w-6 h-6 text-slate-900" />}
-          </button>
-
-          {/* Mobile menu panel */}
-          {mobileMenuOpen && (
-            <div className="md:hidden absolute right-4 top-full mt-2 w-64 bg-white border border-slate-200 rounded-xl shadow-lg p-4">
-              <div className="flex flex-col gap-3">
-                <a href="#accounts" className="px-2 py-2 rounded-lg hover:bg-slate-50 text-slate-700" onClick={() => setMobileMenuOpen(false)}>
-                  Accounts
-                </a>
-                <a href="#features" className="px-2 py-2 rounded-lg hover:bg-slate-50 text-slate-700" onClick={() => setMobileMenuOpen(false)}>
-                  Features
-                </a>
-                <a href="#faq" className="px-2 py-2 rounded-lg hover:bg-slate-50 text-slate-700" onClick={() => setMobileMenuOpen(false)}>
-                  FAQ
-                </a>
-                <a href="#support" className="px-2 py-2 rounded-lg hover:bg-slate-50 text-slate-700" onClick={() => setMobileMenuOpen(false)}>
-                  Support
-                </a>
-                <div className="border-t border-slate-200 my-2" />
-                {isLoggedIn ? (
-                  <Button
-                    onClick={() => {
-                      setMobileMenuOpen(false)
-                      router.push("/dashboard")
-                    }}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
-                  >
-                    Dashboard
-                  </Button>
-                ) : (
-                  <>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        setMobileMenuOpen(false)
-                        router.push("/auth/login")
-                      }}
-                      className="w-full"
-                    >
-                      Sign In
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        setMobileMenuOpen(false)
-                        router.push("/auth/signup")
-                      }}
-                      className="w-full bg-blue-600 hover:bg-blue-700"
-                    >
-                      Sign Up
-                    </Button>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       </nav>
 
@@ -243,7 +170,7 @@ export default function Landing() {
             <span className="text-sm font-medium text-blue-700">Now Available in 50 States</span>
           </motion.div>
 
-          <motion.h1 variants={itemVariants} className="text-3xl sm:text-5xl md:text-6xl font-bold text-slate-900 leading-tight">
+          <motion.h1 variants={itemVariants} className="text-5xl md:text-6xl font-bold text-slate-900 leading-tight">
             Modern Banking
             <br />
             <span className="bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent">
@@ -251,7 +178,7 @@ export default function Landing() {
             </span>
           </motion.h1>
 
-          <motion.p variants={itemVariants} className="text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
+          <motion.p variants={itemVariants} className="text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
             Experience banking that actually works. Zero fees, instant transfers, and support when you need it. Join
             over 500,000 customers already banking smarter.
           </motion.p>
@@ -288,7 +215,7 @@ export default function Landing() {
       <section id="accounts" className="bg-slate-900 text-white py-20 md:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} className="text-center mb-16">
-            <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-4">Choose Your Account</h2>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">Choose Your Account</h2>
             <p className="text-xl text-slate-400">The right banking solution for every life stage</p>
           </motion.div>
 
@@ -331,7 +258,7 @@ export default function Landing() {
       {/* Features Section */}
       <section id="features" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-28">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} className="text-center mb-16">
-          <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold text-slate-900 mb-4">Why Choose Premier America?</h2>
+          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">Why Choose Premier America?</h2>
           <p className="text-xl text-slate-600">Everything you need for modern banking</p>
         </motion.div>
 
@@ -364,7 +291,7 @@ export default function Landing() {
       <section className="bg-slate-50 py-20 md:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} className="text-center mb-16">
-            <h2 className="text-2xl sm:text-4xl md:text-5xl font-bold text-slate-900 mb-4">Loved by Thousands</h2>
+            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">Loved by Thousands</h2>
             <p className="text-xl text-slate-600">Join customers who've switched and never looked back</p>
           </motion.div>
 
@@ -439,7 +366,7 @@ export default function Landing() {
           <motion.h2
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            className="text-2xl sm:text-4xl md:text-5xl font-bold mb-6"
+            className="text-4xl md:text-5xl font-bold mb-6"
           >
             Ready to bank better?
           </motion.h2>
@@ -475,22 +402,22 @@ export default function Landing() {
               <h3 className="font-bold text-white mb-4">Company</h3>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="/about" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     About Us
                   </a>
                 </li>
                 <li>
-                  <a href="/careers" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     Careers
                   </a>
                 </li>
                 <li>
-                  <a href="/press" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     Press
                   </a>
                 </li>
                 <li>
-                  <a href="/blog" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     Blog
                   </a>
                 </li>
@@ -500,22 +427,22 @@ export default function Landing() {
               <h3 className="font-bold text-white mb-4">Products</h3>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="/products/checking" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     Checking
                   </a>
                 </li>
                 <li>
-                  <a href="/products/savings" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     Savings
                   </a>
                 </li>
                 <li>
-                  <a href="/products/investing" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     Investing
                   </a>
                 </li>
                 <li>
-                  <a href="/products/business" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     Business
                   </a>
                 </li>
@@ -525,22 +452,22 @@ export default function Landing() {
               <h3 className="font-bold text-white mb-4">Support</h3>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="/help" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     Help Center
                   </a>
                 </li>
                 <li>
-                  <a href="/contact" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     Contact Us
                   </a>
                 </li>
                 <li>
-                  <a href="/security" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     Security
                   </a>
                 </li>
                 <li>
-                  <a href="/feedback" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     Feedback
                   </a>
                 </li>
@@ -550,22 +477,22 @@ export default function Landing() {
               <h3 className="font-bold text-white mb-4">Legal</h3>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <a href="/terms" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     Terms of Service
                   </a>
                 </li>
                 <li>
-                  <a href="/privacy" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     Privacy Policy
                   </a>
                 </li>
                 <li>
-                  <a href="/disclosures" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     Disclosures
                   </a>
                 </li>
                 <li>
-                  <a href="/fdic" className="hover:text-white transition">
+                  <a href="#" className="hover:text-white transition">
                     FDIC Insurance
                   </a>
                 </li>

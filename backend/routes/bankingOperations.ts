@@ -1,6 +1,5 @@
 import express from "express"
 import { verifyToken } from "../middleware/auth.ts"
-import logger from '../logger.js'
 
 const router = express.Router()
 
@@ -31,7 +30,7 @@ router.post("/deposits", verifyToken, async (req, res) => {
       message: `Deposit of $${amount} initiated. Funds will arrive in 1-3 business days.`,
     })
   } catch (error) {
-    logger.error("Deposit error:", error)
+    console.error("Deposit error:", error)
     res.status(500).json({ error: "Deposit failed" })
   }
 })
@@ -61,7 +60,7 @@ router.post("/payments", verifyToken, async (req, res) => {
       message: "Payment scheduled successfully",
     })
   } catch (error) {
-    logger.error("Payment error:", error)
+    console.error("Payment error:", error)
     res.status(500).json({ error: "Payment failed" })
   }
 })
@@ -104,7 +103,6 @@ router.get("/billers", verifyToken, async (req, res) => {
 
     res.json({ billers })
   } catch (error) {
-    logger.error('Get billers error:', error)
     res.status(500).json({ error: "Failed to fetch billers" })
   }
 })

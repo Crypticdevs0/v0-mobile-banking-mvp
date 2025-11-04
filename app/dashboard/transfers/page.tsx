@@ -4,7 +4,6 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Send, ArrowLeft } from "lucide-react"
-import logger from '@/lib/logger'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
@@ -26,17 +25,12 @@ export default function TransfersPage() {
 
     setLoading(true)
     try {
-      // Obtain CSRF token
-      const csrfRes = await fetch('/api/csrf-token', { credentials: 'include' })
-      if (!csrfRes.ok) throw new Error('Failed to obtain CSRF token')
-      const csrfData = await csrfRes.json()
-
+      const token = localStorage.getItem("authToken")
       const response = await fetch("/api/transfers", {
         method: "POST",
-        credentials: 'include',
         headers: {
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
-          "x-csrf-token": csrfData.csrfToken,
         },
         body: JSON.stringify({ recipientAccountId: recipient, amount: Number.parseFloat(amount), description }),
       })
@@ -47,7 +41,6 @@ export default function TransfersPage() {
       setStep(3)
       setTimeout(() => router.push("/dashboard"), 3000)
     } catch (err: any) {
-      logger.error(err)
       setError(err.message)
     } finally {
       setLoading(false)
@@ -67,7 +60,7 @@ export default function TransfersPage() {
   return (
     <div className="min-h-screen bg-background pb-24">
       {/* Header */}
-      <div className="max-w-md mx-auto px-4 py-6 border-b border-border">
+      <div className="max-w-lg mx-auto px-4 py-6 border-b border-border">
         <div className="flex items-center gap-4 mb-4">
           <Link href="/dashboard">
             <ArrowLeft className="w-6 h-6 text-foreground cursor-pointer hover:opacity-70" />
@@ -78,7 +71,7 @@ export default function TransfersPage() {
         </div>
       </div>
 
-      <div className="max-w-md mx-auto px-4 py-8">
+      <div className="max-w-lg mx-auto px-4 py-8">
         <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
           {step === 0 && (
             <>

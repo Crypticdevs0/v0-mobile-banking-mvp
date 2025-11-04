@@ -1,20 +1,13 @@
 import express from "express"
-import { getAdminSupabase } from "../../lib/supabase/admin.js"
+import { createClient as createSupabase } from "@supabase/supabase-js"
 import jwt from "jsonwebtoken"
 import { fineractService } from "../services/fineractService.js"
 import { supabaseOperations } from "../../lib/supabase/supabaseService.js"
-import logger from '../logger.js'
 
 const router = express.Router()
 
-// Initialize Supabase admin client for backend operations
-const supabase = getAdminSupabase()
-
-// Enforce JWT secret presence at startup to avoid accidental weak fallback
-if (!process.env.JWT_SECRET) {
-  logger.error('JWT_SECRET is not configured. Aborting startup.');
-  process.exit(1);
-}
+// Initialize Supabase client for backend operations
+const supabase = createSupabase(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
 // Validate Supabase JWT token
 const verifySupabaseToken = async (req: any, res: any, next: any) => {
@@ -70,29 +63,15 @@ router.post("/signup", async (req: any, res: any) => {
     // Create savings account
     const fineractAccount = await fineractService.createSavingsAccount(fineractClientId)
     const fineractAccountId = fineractAccount.resourceId
-    const fineractAccountNo = fineractAccount.accountNo || ""
 
     // Create user profile in Supabase
     await supabaseOperations.createUserProfile(userId, email, firstName, lastName, fineractClientId)
 
-    // Create account record (persist account number from Fineract when available)
-    await supabaseOperations.createAccount(userId, fineractAccountId, 0, fineractAccountNo)
+    // Create account record
+    await supabaseOperations.createAccount(userId, fineractAccountId, 0, "")
 
     // Get balance
     const balance = await fineractService.getAccountBalance(fineractAccountId)
-
-    // Create JWT and set as secure, HttpOnly cookie
-    const token = authData.user?.id ? jwt.sign({ userId: userId, email, accountId: fineractAccountId }, process.env.JWT_SECRET, { expiresIn: "7d" }) : undefined
-
-    if (token) {
-      res.cookie("auth_token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        path: "/",
-      })
-    }
 
     res.json({
       success: true,
@@ -110,7 +89,7 @@ router.post("/signup", async (req: any, res: any) => {
       },
     })
   } catch (error: any) {
-    logger.error("Signup error:", error)
+    console.error("Signup error:", error)
     res.status(500).json({ error: error.message || "Signup failed" })
   }
 })
@@ -141,27 +120,20 @@ router.post("/login", async (req: any, res: any) => {
     // Get Fineract balance
     const balance = await fineractService.getAccountBalance(account.fineract_account_id)
 
-    // Create JWT for app and set HttpOnly cookie
+    // Create JWT for app
     const token = jwt.sign(
       {
         userId: authData.user.id,
         email: authData.user.email,
         accountId: account.fineract_account_id,
       },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET || "your-secret-key",
       { expiresIn: "7d" },
     )
 
-    res.cookie("auth_token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: "/",
-    })
-
     res.json({
       success: true,
+      token,
       user: {
         id: authData.user.id,
         email: userProfile.email,
@@ -174,51 +146,8 @@ router.post("/login", async (req: any, res: any) => {
       },
     })
   } catch (error: any) {
-    logger.error("Login error:", error)
+    console.error("Login error:", error)
     res.status(500).json({ error: error.message || "Login failed" })
-  }
-})
-
-// Logout endpoint
-router.post("/logout", async (req: any, res: any) => {
-  try {
-    res.clearCookie("auth_token", { path: "/" })
-    res.json({ success: true })
-  } catch (error: any) {
-    logger.error("Logout error:", error)
-    res.status(500).json({ error: "Logout failed" })
-  }
-})
-
-// Current user endpoint (reads token from cookie)
-router.get("/me", async (req: any, res: any) => {
-  try {
-    const token = req.cookies?.auth_token
-    if (!token) return res.status(401).json({ error: "Not authenticated" })
-
-    let decoded: any
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET)
-    } catch (err) {
-      return res.status(401).json({ error: "Invalid token" })
-    }
-
-    const userProfile = await supabaseOperations.getUserProfile(decoded.userId)
-    const account = await supabaseOperations.getAccountByUserId(decoded.userId)
-
-    res.json({
-      success: true,
-      user: {
-        id: decoded.userId,
-        email: decoded.email,
-        accountId: decoded.accountId,
-        profile: userProfile,
-      },
-      account: account || null,
-    })
-  } catch (error: any) {
-    logger.error("Me endpoint error:", error)
-    res.status(500).json({ error: "Failed to fetch user" })
   }
 })
 
@@ -237,7 +166,7 @@ router.post("/sync-balance", verifySupabaseToken, async (req: any, res: any) => 
       currency: balance.currency,
     })
   } catch (error: any) {
-    logger.error("Sync balance error:", error)
+    console.error("Sync balance error:", error)
     res.status(500).json({ error: error.message || "Failed to sync balance" })
   }
 })

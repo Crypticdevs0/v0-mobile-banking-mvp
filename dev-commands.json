@@ -1,0 +1,126 @@
+{
+  "name": "Premier America Credit Union - Development & Production Commands",
+  "description": "Complete guide for dev setup, build, and deployment",
+
+  "setup": {
+    "description": "Initial project setup",
+    "steps": ["bash setup-env.sh", "npm install", "npm run migrate", "npm run seed"]
+  },
+
+  "development": {
+    "description": "Start development environment",
+    "commands": {
+      "dev:all": "npm run dev:backend & npm run dev:frontend",
+      "dev:backend": "cd backend && node server.js",
+      "dev:frontend": "next dev",
+      "dev:watch": "npm run dev:backend -- --watch & npm run dev:frontend",
+      "dev:debug": "NODE_DEBUG=* npm run dev:backend"
+    }
+  },
+
+  "build": {
+    "description": "Build for production",
+    "commands": {
+      "build:all": "npm run build:frontend && npm run build:backend",
+      "build:frontend": "next build",
+      "build:backend": "npm run lint:backend",
+      "build:docker": "docker build -t premier-banking:latest ."
+    }
+  },
+
+  "production": {
+    "description": "Production deployment commands",
+    "commands": {
+      "start:all": "npm run start:backend & npm run start:frontend",
+      "start:backend": "cd backend && PORT=3001 NODE_ENV=production node server.js",
+      "start:frontend": "next start",
+      "deploy:vercel": "vercel deploy --prod",
+      "deploy:heroku:backend": "git push heroku main",
+      "deploy:docker": "docker run -p 3001:3001 -p 3000:3000 premier-banking:latest"
+    }
+  },
+
+  "database": {
+    "description": "Database management commands",
+    "commands": {
+      "migrate": "npm run db:migrate",
+      "migrate:001": "npm run db:execute -- scripts/001_create_banking_schema.sql",
+      "migrate:002": "npm run db:execute -- scripts/002_enable_rls.sql",
+      "migrate:003": "npm run db:execute -- scripts/003_add_otp_table.sql",
+      "seed": "npm run db:seed",
+      "reset": "npm run db:reset && npm run migrate && npm run seed"
+    }
+  },
+
+  "testing": {
+    "description": "Testing commands",
+    "commands": {
+      "test": "jest",
+      "test:watch": "jest --watch",
+      "test:coverage": "jest --coverage",
+      "test:backend": "jest backend/",
+      "test:frontend": "jest app/",
+      "test:e2e": "playwright test"
+    }
+  },
+
+  "linting": {
+    "description": "Code quality commands",
+    "commands": {
+      "lint": "npm run lint:backend && npm run lint:frontend",
+      "lint:backend": "eslint backend/ --fix",
+      "lint:frontend": "eslint app/ --fix",
+      "format": "prettier --write ."
+    }
+  },
+
+  "health": {
+    "description": "System health check commands",
+    "commands": {
+      "health:backend": "curl http://localhost:3001/api/health",
+      "health:frontend": "curl http://localhost:3000",
+      "health:db": "npm run db:check",
+      "health:all": "npm run health:backend && npm run health:frontend && npm run health:db"
+    }
+  },
+
+  "cleanup": {
+    "description": "Cleanup and maintenance commands",
+    "commands": {
+      "clean": "rm -rf node_modules .next dist && npm install",
+      "audit": "npm audit",
+      "audit:fix": "npm audit fix",
+      "outdated": "npm outdated",
+      "prune": "npm prune",
+      "cache:clean": "npm cache clean --force"
+    }
+  },
+
+  "docker": {
+    "description": "Docker containerization",
+    "commands": {
+      "docker:build": "docker build -t premier-banking:latest .",
+      "docker:run": "docker run -p 3001:3001 -p 3000:3000 --env-file .env.local premier-banking:latest",
+      "docker:compose:up": "docker-compose up -d",
+      "docker:compose:down": "docker-compose down",
+      "docker:compose:logs": "docker-compose logs -f"
+    }
+  },
+
+  "deployment": {
+    "vercel": {
+      "frontend": "vercel deploy --prod",
+      "backend": "vercel deploy --prod backend/"
+    },
+    "heroku": {
+      "setup": "heroku create premier-banking-api",
+      "deploy": "git push heroku main",
+      "logs": "heroku logs --tail"
+    },
+    "aws": {
+      "ecr:login": "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin [account-id].dkr.ecr.us-east-1.amazonaws.com",
+      "ecr:push": "docker push [account-id].dkr.ecr.us-east-1.amazonaws.com/premier-banking:latest",
+      "ecs:deploy": "aws ecs update-service --cluster premier-banking --service api --force-new-deployment"
+    }
+  }
+}
