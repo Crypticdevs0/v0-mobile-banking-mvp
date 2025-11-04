@@ -19,7 +19,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     try {
       return createSupabaseClient()
     } catch (e) {
-      console.error("Failed to create Supabase client", e)
+      logger.error("Failed to create Supabase client", e)
       return null
     }
   }, [])
@@ -68,7 +68,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "transactions", filter: `sender_id=eq.${uid}` },
         (payload) => {
-          console.info("Realtime: transaction sent", payload.new)
+          logger.info("Realtime: transaction sent", payload.new)
           window.dispatchEvent(new CustomEvent("transactions:insert", { detail: payload.new }))
         },
       )
@@ -77,7 +77,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "transactions", filter: `receiver_id=eq.${uid}` },
         (payload) => {
-          console.info("Realtime: transaction received", payload.new)
+          logger.info("Realtime: transaction received", payload.new)
           window.dispatchEvent(new CustomEvent("transactions:insert", { detail: payload.new }))
         },
       )
@@ -86,12 +86,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "notifications", filter: `user_id=eq.${uid}` },
         (payload) => {
-          console.info("Realtime: notification", payload.new)
+          logger.info("Realtime: notification", payload.new)
           window.dispatchEvent(new CustomEvent("notifications:insert", { detail: payload.new }))
         },
       )
       .subscribe((status) => {
-        console.log("Realtime channel status:", status)
+        logger.info("Realtime channel status:", status)
       })
 
     channelRef.current = channel
