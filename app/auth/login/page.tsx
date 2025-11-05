@@ -35,7 +35,7 @@ export default function LoginPage() {
 
       if (data.user) {
         localStorage.setItem("userEmail", email)
-        router.push("/auth/otp-verification")
+        router.push("/dashboard")
       }
     } catch (err: any) {
       setError(err.message || "Login failed")

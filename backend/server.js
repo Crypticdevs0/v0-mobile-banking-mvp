@@ -3,12 +3,26 @@ import { createServer } from "http"
 import { Server } from "socket.io"
 import cors from "cors"
 import jwt from "jsonwebtoken"
-import dotenv from "dotenv"
 import { fineractService } from "./services/fineractService.js"
 import { SocketService } from "./services/socketService.js"
 import otpRouter from "./routes/otpAuth.ts"
 
-dotenv.config()
+const requiredEnvVars = [
+  "FINERACT_URL",
+  "FINERACT_TENANT",
+  "FINERACT_USERNAME",
+  "FINERACT_PASSWORD",
+  "JWT_SECRET",
+  "NEXT_PUBLIC_SUPABASE_URL",
+  "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+]
+
+const missingEnvVars = requiredEnvVars.filter((varName) => !process.env[varName])
+if (missingEnvVars.length > 0) {
+  console.error("❌ Missing required environment variables:", missingEnvVars.join(", "))
+  console.error("Please set these variables before starting the server.")
+  process.exit(1)
+}
 
 const app = express()
 const httpServer = createServer(app)
@@ -30,6 +44,22 @@ app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`)
   next()
 })
+
+const verifyToken = (req, res, next) => {
+  const token = req.headers.authorization?.split(" ")[1]
+
+  if (!token) {
+    return res.status(401).json({ error: "No token provided" })
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    req.user = decoded
+    next()
+  } catch (error) {
+    res.status(401).json({ error: "Invalid token" })
+  }
+}
 
 app.use("/api/auth", otpRouter)
 
@@ -103,7 +133,7 @@ app.post("/api/auth/signup", async (req, res) => {
         email,
         accountId: accountData.resourceId,
       },
-      process.env.JWT_SECRET || "your-secret-key",
+      process.env.JWT_SECRET,
       { expiresIn: "7d" },
     )
 
@@ -151,7 +181,7 @@ app.post("/api/auth/login", async (req, res) => {
         email,
         accountId: user.accountId,
       },
-      process.env.JWT_SECRET || "your-secret-key",
+      process.env.JWT_SECRET,
       { expiresIn: "7d" },
     )
 
@@ -170,23 +200,6 @@ app.post("/api/auth/login", async (req, res) => {
     res.status(500).json({ error: "Login failed" })
   }
 })
-
-// ===== Auth Middleware =====
-const verifyToken = (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1]
-
-  if (!token) {
-    return res.status(401).json({ error: "No token provided" })
-  }
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || "your-secret-key")
-    req.user = decoded
-    next()
-  } catch (error) {
-    res.status(401).json({ error: "Invalid token" })
-  }
-}
 
 // ===== Account Routes =====
 app.get("/api/accounts/balance", verifyToken, async (req, res) => {
@@ -349,9 +362,32 @@ io.on("connection", (socket) => {
   })
 })
 
-// Health check
-app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", timestamp: new Date() })
+app.get("/api/health", async (req, res) => {
+  try {
+    // Test Fineract connectivity
+    const fineractHealth = await fetch(`${process.env.FINERACT_URL}/fineract-provider/api/v1/health`, {
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${process.env.FINERACT_USERNAME}:${process.env.FINERACT_PASSWORD}`).toString("base64")}`,
+      },
+    })
+      .then((r) => r.ok)
+      .catch(() => false)
+
+    res.json({
+      status: "ok",
+      timestamp: new Date(),
+      services: {
+        api: "healthy",
+        fineract: fineractHealth ? "healthy" : "degraded",
+        socketio: io.engine.clientsCount >= 0 ? "healthy" : "down",
+      },
+    })
+  } catch (error) {
+    res.status(503).json({
+      status: "error",
+      error: error.message,
+    })
+  }
 })
 
 // Error handling
@@ -362,6 +398,7 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3001
 httpServer.listen(PORT, () => {
-  console.log(`Banking server running on port ${PORT}`)
-  console.log(`Socket.io listening for connections`)
+  console.log(`✅ Banking server running on port ${PORT}`)
+  console.log(`✅ Socket.io listening for connections`)
+  console.log(`✅ Environment: ${process.env.NODE_ENV || "development"}`)
 })
