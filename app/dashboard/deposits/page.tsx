@@ -65,31 +65,37 @@ export default function DepositsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="max-w-lg mx-auto px-4 py-6 border-b border-border">
-        <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-background pb-20 sm:pb-24">
+      <div className="max-w-lg mx-auto px-3 sm:px-4 py-4 sm:py-6 border-b border-border">
+        <div className="flex items-center gap-3 sm:gap-4">
           <Link href="/dashboard">
-            <ArrowLeft className="w-6 h-6 text-foreground cursor-pointer hover:opacity-70" />
+            <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-foreground cursor-pointer hover:opacity-70" />
           </Link>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Download className="w-6 h-6" /> Add Funds
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
+            <Download className="w-5 h-5 sm:w-6 sm:h-6" /> Add Funds
           </h1>
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto px-4 py-8">
-        <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
+      <div className="max-w-lg mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-4 sm:space-y-6">
           <Tabs value={method} onValueChange={setMethod} className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="bank-transfer">Bank Transfer</TabsTrigger>
-              <TabsTrigger value="card">Debit Card</TabsTrigger>
-              <TabsTrigger value="mobile-check">Mobile Check</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 h-auto">
+              <TabsTrigger value="bank-transfer" className="text-xs sm:text-sm py-2">
+                Bank Transfer
+              </TabsTrigger>
+              <TabsTrigger value="card" className="text-xs sm:text-sm py-2">
+                Debit Card
+              </TabsTrigger>
+              <TabsTrigger value="mobile-check" className="text-xs sm:text-sm py-2">
+                Mobile Check
+              </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="bank-transfer" className="space-y-4 mt-6">
-              <motion.div variants={itemVariants} className="card p-6">
-                <h2 className="font-bold text-foreground mb-4">Bank Account Details</h2>
-                <div className="space-y-3 text-sm mb-6 bg-slate-50 p-4 rounded-lg">
+            <TabsContent value="bank-transfer" className="space-y-4 mt-4 sm:mt-6">
+              <motion.div variants={itemVariants} className="card p-4 sm:p-6">
+                <h2 className="font-bold text-sm sm:text-base text-foreground mb-3 sm:mb-4">Bank Account Details</h2>
+                <div className="space-y-2 sm:space-y-3 text-xs sm:text-sm mb-4 sm:mb-6 bg-slate-50 p-3 sm:p-4 rounded-lg">
                   <p>
                     <strong>Bank Name:</strong> Premier America Credit Union
                   </p>
@@ -103,59 +109,65 @@ export default function DepositsPage() {
                 <p className="text-xs text-foreground-secondary">Use these details to transfer funds from your bank.</p>
               </motion.div>
 
-              <motion.div variants={itemVariants} className="card p-6">
-                <h2 className="font-bold text-foreground mb-4">Transfer Amount</h2>
-                <div className="relative mb-4">
-                  <span className="absolute left-4 top-3 text-foreground-secondary">$</span>
+              <motion.div variants={itemVariants} className="card p-4 sm:p-6">
+                <h2 className="font-bold text-sm sm:text-base text-foreground mb-3 sm:mb-4">Transfer Amount</h2>
+                <div className="relative mb-3 sm:mb-4">
+                  <span className="absolute left-3 sm:left-4 top-2.5 sm:top-3 text-foreground-secondary text-sm sm:text-base">
+                    $
+                  </span>
                   <Input
                     type="number"
                     placeholder="0.00"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="pl-8"
+                    className="pl-7 sm:pl-8 h-10 sm:h-11 text-sm sm:text-base"
                   />
                 </div>
                 <p className="text-xs text-foreground-secondary">Transfers usually take 1-3 business days</p>
               </motion.div>
             </TabsContent>
 
-            <TabsContent value="card" className="space-y-4 mt-6">
-              <motion.div variants={itemVariants} className="card p-6 space-y-4">
-                <h2 className="font-bold text-foreground">Debit Card Details</h2>
-                <Input placeholder="Card Number" />
-                <div className="grid grid-cols-2 gap-4">
-                  <Input placeholder="MM/YY" />
-                  <Input placeholder="CVV" />
+            <TabsContent value="card" className="space-y-4 mt-4 sm:mt-6">
+              <motion.div variants={itemVariants} className="card p-4 sm:p-6 space-y-3 sm:space-y-4">
+                <h2 className="font-bold text-sm sm:text-base text-foreground">Debit Card Details</h2>
+                <Input placeholder="Card Number" className="h-10 sm:h-11 text-sm sm:text-base" />
+                <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                  <Input placeholder="MM/YY" className="h-10 sm:h-11 text-sm sm:text-base" />
+                  <Input placeholder="CVV" className="h-10 sm:h-11 text-sm sm:text-base" />
                 </div>
                 <div className="relative">
-                  <span className="absolute left-4 top-3 text-foreground-secondary">$</span>
+                  <span className="absolute left-3 sm:left-4 top-2.5 sm:top-3 text-foreground-secondary text-sm sm:text-base">
+                    $
+                  </span>
                   <Input
                     type="number"
                     placeholder="Amount"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="pl-8"
+                    className="pl-7 sm:pl-8 h-10 sm:h-11 text-sm sm:text-base"
                   />
                 </div>
               </motion.div>
             </TabsContent>
 
-            <TabsContent value="mobile-check" className="space-y-4 mt-6">
-              <motion.div variants={itemVariants} className="card p-6">
-                <h2 className="font-bold text-foreground mb-4">Mobile Check Deposit</h2>
-                <label className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-xl p-8 cursor-pointer hover:border-primary transition">
-                  <Upload className="w-8 h-8 text-foreground-secondary mb-2" />
-                  <span className="text-sm text-foreground">Upload check image</span>
+            <TabsContent value="mobile-check" className="space-y-4 mt-4 sm:mt-6">
+              <motion.div variants={itemVariants} className="card p-4 sm:p-6">
+                <h2 className="font-bold text-sm sm:text-base text-foreground mb-3 sm:mb-4">Mobile Check Deposit</h2>
+                <label className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-xl p-6 sm:p-8 cursor-pointer hover:border-primary transition">
+                  <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-foreground-secondary mb-2" />
+                  <span className="text-xs sm:text-sm text-foreground">Upload check image</span>
                   <input type="file" accept="image/*" className="hidden" />
                 </label>
-                <div className="relative mt-6">
-                  <span className="absolute left-4 top-3 text-foreground-secondary">$</span>
+                <div className="relative mt-4 sm:mt-6">
+                  <span className="absolute left-3 sm:left-4 top-2.5 sm:top-3 text-foreground-secondary text-sm sm:text-base">
+                    $
+                  </span>
                   <Input
                     type="number"
                     placeholder="Check Amount"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
-                    className="pl-8"
+                    className="pl-7 sm:pl-8 h-10 sm:h-11 text-sm sm:text-base"
                   />
                 </div>
               </motion.div>
@@ -166,7 +178,7 @@ export default function DepositsPage() {
             <Button
               onClick={handleDeposit}
               disabled={loading || !amount}
-              className="w-full bg-primary hover:bg-primary-dark h-12"
+              className="w-full bg-primary hover:bg-primary-dark h-11 sm:h-12 text-sm sm:text-base"
             >
               {loading ? "Processing..." : `Add $${amount || "0.00"}`}
             </Button>
