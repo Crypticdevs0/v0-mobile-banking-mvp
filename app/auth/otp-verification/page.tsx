@@ -6,11 +6,9 @@ import { motion } from "framer-motion"
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp"
 import { Button } from "@/components/ui/button"
 import { Mail, Clock, CheckCircle } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
 
 export default function OTPVerificationPage() {
   const router = useRouter()
-  const supabase = createClient()
   const [otp, setOtp] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
@@ -21,6 +19,15 @@ export default function OTPVerificationPage() {
   useEffect(() => {
     const email = localStorage.getItem("userEmail") || ""
     setUserEmail(email)
+
+    // Auto-send OTP when arriving at the page
+    if (email) {
+      fetch('/api/otp/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      }).catch((err) => console.error('[OTP] send error:', err))
+    }
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0))
@@ -36,38 +43,24 @@ export default function OTPVerificationPage() {
 
     setLoading(true)
     try {
-      // Verify OTP in Supabase
-      const { data: otpData, error: otpError } = await supabase
-        .from("otp_codes")
-        .select("*")
-        .eq("email", userEmail)
-        .eq("code", otp)
-        .single()
+      const resp = await fetch('/api/otp/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: userEmail, otp }),
+      })
 
-      if (otpError || !otpData) {
-        throw new Error("Invalid or expired OTP code")
-      }
-
-      // Check if OTP is expired
-      if (new Date(otpData.expires_at) < new Date()) {
-        throw new Error("OTP code has expired")
-      }
-
-      // Mark OTP as verified
-      await supabase.from("otp_codes").update({ verified_at: new Date().toISOString() }).eq("id", otpData.id)
+      const result = await resp.json()
+      if (!resp.ok) throw new Error(result.error || 'Verification failed')
 
       setVerified(true)
 
-      // Generate account and routing numbers
-      const accountNumber = `${Math.floor(100000000 + Math.random() * 900000000)}`
-      const routingNumber = "021000021"
-
-      localStorage.setItem("accountNumber", accountNumber)
-      localStorage.setItem("routingNumber", routingNumber)
+      // Store demo account/routing returned by the server
+      if (result.accountNumber) localStorage.setItem('accountNumber', result.accountNumber)
+      if (result.routingNumber) localStorage.setItem('routingNumber', result.routingNumber)
 
       setTimeout(() => {
-        router.push("/dashboard")
-      }, 2000)
+        router.push('/dashboard')
+      }, 1200)
     } catch (err: any) {
       setError(err.message || "Verification failed")
     } finally {
@@ -77,27 +70,20 @@ export default function OTPVerificationPage() {
 
   const handleResend = async () => {
     try {
-      // Generate new OTP
-      const newOtp = Math.floor(100000 + Math.random() * 900000).toString()
-      const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString()
-
-      // Delete old OTP codes for this email
-      await supabase.from("otp_codes").delete().eq("email", userEmail)
-
-      // Insert new OTP
-      await supabase.from("otp_codes").insert({
-        email: userEmail,
-        code: newOtp,
-        expires_at: expiresAt,
-        attempts: 0,
-        max_attempts: 3,
+      const resp = await fetch('/api/otp/resend-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: userEmail }),
       })
+
+      const result = await resp.json()
+      if (!resp.ok) throw new Error(result.error || 'Failed to resend OTP')
 
       setTimeLeft(300)
       setError("")
       setOtp("")
-    } catch (err) {
-      setError("Failed to resend OTP")
+    } catch (err: any) {
+      setError(err.message || "Failed to resend OTP")
     }
   }
 

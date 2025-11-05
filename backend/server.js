@@ -5,6 +5,7 @@ import cors from "cors"
 import jwt from "jsonwebtoken"
 import { fineractService } from "./services/fineractService.js"
 import { SocketService } from "./services/socketService.js"
+import otpRouter from "./routes/otpAuth.js"
 
 const requiredEnvVars = [
   "FINERACT_URL",
@@ -13,7 +14,7 @@ const requiredEnvVars = [
   "FINERACT_PASSWORD",
   "JWT_SECRET",
   "NEXT_PUBLIC_SUPABASE_URL",
-  "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  "SUPABASE_SERVICE_ROLE_KEY",
 ]
 
 const missingEnvVars = requiredEnvVars.filter((varName) => !process.env[varName])
@@ -37,6 +38,9 @@ const socketService = new SocketService(io)
 // Middleware
 app.use(cors())
 app.use(express.json())
+
+// Mount backend routers
+app.use('/api/otp', otpRouter)
 
 // Logger middleware
 app.use((req, res, next) => {
