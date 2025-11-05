@@ -140,7 +140,7 @@ export default function Landing() {
               Support
             </a>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="hidden md:flex items-center gap-3">
             {isLoggedIn ? (
               <Button onClick={() => router.push("/dashboard")} className="bg-blue-600 hover:bg-blue-700">
                 Dashboard
