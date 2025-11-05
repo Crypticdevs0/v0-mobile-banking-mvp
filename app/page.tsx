@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { CreditCard, ArrowRight, Check, Users, Zap, Shield, ChevronDown } from "lucide-react"
+import { CreditCard, ArrowRight, Check, Users, Zap, Shield, ChevronDown, Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export default function Landing() {
   const router = useRouter()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [activeTab, setActiveTab] = useState<string | null>(null)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem("authToken")
@@ -126,6 +127,8 @@ export default function Landing() {
             <CreditCard className="w-7 h-7 text-blue-600" />
             <span className="font-bold text-xl text-slate-900">Premier America</span>
           </motion.div>
+
+          {/* Desktop links */}
           <div className="hidden md:flex items-center gap-8">
             <a href="#accounts" className="text-slate-600 hover:text-slate-900 transition">
               Accounts
@@ -140,7 +143,9 @@ export default function Landing() {
               Support
             </a>
           </div>
-          <div className="flex items-center gap-3">
+
+          {/* Desktop actions */}
+          <div className="hidden md:flex items-center gap-3">
             {isLoggedIn ? (
               <Button onClick={() => router.push("/dashboard")} className="bg-blue-600 hover:bg-blue-700">
                 Dashboard
@@ -156,8 +161,66 @@ export default function Landing() {
               </>
             )}
           </div>
+
+          {/* Mobile hamburger */}
+          <div className="md:hidden flex items-center">
+            <button
+              aria-label="Open menu"
+              className="p-2 rounded-md focus:outline-none focus-visible:ring-ring"
+              onClick={() => setMenuOpen(true)}
+            >
+              <Menu className="w-6 h-6 text-slate-800" />
+            </button>
+          </div>
         </div>
       </nav>
+
+      {/* Mobile menu overlay */}
+      {menuOpen && (
+        <div className="fixed inset-0 z-40 md:hidden bg-white p-6 overflow-auto">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <CreditCard className="w-6 h-6 text-blue-600" />
+              <span className="font-bold text-lg text-slate-900">Premier America</span>
+            </div>
+            <button aria-label="Close menu" className="p-2 rounded-md" onClick={() => setMenuOpen(false)}>
+              <X className="w-6 h-6 text-slate-800" />
+            </button>
+          </div>
+
+          <nav className="flex flex-col space-y-4">
+            <a href="#accounts" onClick={() => setMenuOpen(false)} className="text-slate-700 text-base font-medium">
+              Accounts
+            </a>
+            <a href="#features" onClick={() => setMenuOpen(false)} className="text-slate-700 text-base font-medium">
+              Features
+            </a>
+            <a href="#faq" onClick={() => setMenuOpen(false)} className="text-slate-700 text-base font-medium">
+              FAQ
+            </a>
+            <a href="#support" onClick={() => setMenuOpen(false)} className="text-slate-700 text-base font-medium">
+              Support
+            </a>
+          </nav>
+
+          <div className="mt-6 space-y-3">
+            {isLoggedIn ? (
+              <Button onClick={() => { setMenuOpen(false); router.push('/dashboard') }} className="w-full bg-blue-600 hover:bg-blue-700">
+                Dashboard
+              </Button>
+            ) : (
+              <>
+                <Button variant="outline" className="w-full" onClick={() => { setMenuOpen(false); router.push('/auth/login') }}>
+                  Sign In
+                </Button>
+                <Button className="w-full bg-blue-600 hover:bg-blue-700" onClick={() => { setMenuOpen(false); router.push('/auth/signup') }}>
+                  Sign Up
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24 md:py-32">
