@@ -13,7 +13,7 @@ const requiredEnvVars = [
   "FINERACT_PASSWORD",
   "JWT_SECRET",
   "NEXT_PUBLIC_SUPABASE_URL",
-  "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  "SUPABASE_SERVICE_ROLE_KEY",
 ]
 
 const missingEnvVars = requiredEnvVars.filter((varName) => !process.env[varName])
