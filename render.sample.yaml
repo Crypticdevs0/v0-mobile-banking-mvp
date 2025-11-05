@@ -1,0 +1,44 @@
+# render.sample.yaml - example Render service configuration for backend
+# Replace placeholders and import into Render or use as reference when creating service
+
+services:
+  - type: web
+    name: premier-banking-backend
+    env: docker # or "node" if not using Dockerfile.backend
+    plan: starter
+    region: oregon
+    repo: <your-github-repo-url>
+    branch: main
+    buildCommand: "npm ci && npm run build"
+    startCommand: "npm run start:backend"
+    envVars:
+      - key: NODE_ENV
+        value: production
+        type: secret
+      - key: SUPABASE_URL
+        value: https://your-project.supabase.co
+        type: secret
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        value: "<set-in-render-secrets>"
+        type: secret
+      - key: JWT_SECRET
+        value: "<set-in-render-secrets>"
+        type: secret
+      - key: FINERACT_URL
+        value: "<your-fineract-url>"
+        type: secret
+      - key: FINERACT_USERNAME
+        value: "<fineract-user>"
+        type: secret
+      - key: FINERACT_PASSWORD
+        value: "<fineract-pass>"
+        type: secret
+      - key: CLIENT_URL
+        value: https://your-frontend.vercel.app
+        type: secret
+    healthCheckPath: /api/health
+    instances: 1
+
+# Security notes:
+# - Mark SUPABASE_SERVICE_ROLE_KEY and JWT_SECRET as secrets in Render dashboard.
+# - Configure CORS in backend to only allow CLIENT_URL.
