@@ -52,6 +52,20 @@ jobs:
       - name: Build Next.js
         run: npm run build
 
+      - name: Scan build for leaked secrets
+        run: |
+          echo "Scanning .next for leaked strings..."
+          set -e
+          # Look for explicit env var names and generic supabase key patterns
+          grep -R --line-number --exclude-dir=node_modules "SUPABASE_SERVICE_ROLE_KEY" .next || true
+          if grep -R --line-number --exclude-dir=node_modules "SUPABASE_SERVICE_ROLE_KEY" .next; then
+            echo "ERROR: Potential service key exposure found in build artifacts"; exit 1
+          fi
+          # Look for likely JWT-like tokens (eyJ...) - may false positive; alert
+          if grep -R --line-number --exclude-dir=node_modules -E "eyJ[0-9A-Za-z\-_.]{10,}" .next; then
+            echo "ERROR: Potential token-like string found in build artifacts"; exit 1
+          fi
+
       - name: (Optional) Deploy preview to Vercel
         if: github.event_name == 'pull_request' && secrets.VERCEL_TOKEN
         env:
