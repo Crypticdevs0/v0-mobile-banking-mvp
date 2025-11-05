@@ -121,13 +121,19 @@ router.post("/login", async (req: any, res: any) => {
     const balance = await fineractService.getAccountBalance(account.fineract_account_id)
 
     // Create JWT for app
+    const jwtSecret = process.env.JWT_SECRET
+    if (!jwtSecret) {
+      console.error("JWT_SECRET is not set")
+      return res.status(500).json({ error: "Server misconfiguration" })
+    }
+
     const token = jwt.sign(
       {
         userId: authData.user.id,
         email: authData.user.email,
         accountId: account.fineract_account_id,
       },
-      process.env.JWT_SECRET || "your-secret-key",
+      jwtSecret,
       { expiresIn: "7d" },
     )
 
