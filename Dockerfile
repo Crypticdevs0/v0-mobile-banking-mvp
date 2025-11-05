@@ -50,7 +50,7 @@ RUN chown -R nextjs:nodejs /app
 USER nextjs
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "fetch('http://localhost:3000/api/health').then(r => {if (!r.ok) throw new Error(r.status)})"
+  CMD curl -fsS http://localhost:3000/api/health || exit 1
 
 # Expose ports
 EXPOSE 3000 3001
