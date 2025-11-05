@@ -1,7 +1,7 @@
 # Multi-stage production build for Premier America Credit Union Banking App
 
 # Stage 1: Build frontend
-FROM node:18-alpine AS frontend-builder
+FROM node:20-alpine AS frontend-builder
 WORKDIR /app
 
 # Copy package files
@@ -16,7 +16,7 @@ COPY . .
 RUN npm run build
 
 # Stage 2: Runtime - includes both frontend and backend
-FROM node:18-alpine
+FROM node:20-alpine
 WORKDIR /app
 
 # Install dumb-init for proper signal handling
@@ -48,9 +48,8 @@ RUN chown -R nextjs:nodejs /app
 # Switch to non-root user
 USER nextjs
 
-# Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/api/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
+  CMD node -e "fetch('http://localhost:3000/api/health').then(r => {if (!r.ok) throw new Error(r.status)})"
 
 # Expose ports
 EXPOSE 3000 3001

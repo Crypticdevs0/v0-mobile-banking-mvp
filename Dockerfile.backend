@@ -1,6 +1,6 @@
 # Backend-only Docker image for Premier America Credit Union
 
-FROM node:18-alpine
+FROM node:20-alpine
 WORKDIR /app
 
 # Install dumb-init
@@ -26,9 +26,8 @@ USER nodejs
 ENV NODE_ENV=production
 ENV PORT=3001
 
-# Health check endpoint
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3001/api/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
+  CMD node -e "fetch('http://localhost:3001/api/health').then(r => {if (!r.ok) throw new Error(r.status)})"
 
 EXPOSE 3001
 
