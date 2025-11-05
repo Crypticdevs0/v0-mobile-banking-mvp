@@ -31,8 +31,10 @@ COPY package*.json ./
 
 RUN npm install --only=production --legacy-peer-deps && npm cache clean --force
 
-# Copy built frontend from builder
-COPY --from=frontend-builder /app/.next ./.next
+# Copy built frontend from builder. If Next.js standalone output exists, use it.
+# Standalone output lives in .next/standalone with a server.js entrypoint and .next/static
+COPY --from=frontend-builder /app/.next/standalone ./
+COPY --from=frontend-builder /app/.next/static ./.next/static
 COPY --from=frontend-builder /app/public ./public
 COPY --from=frontend-builder /app/next.config.mjs ./
 
