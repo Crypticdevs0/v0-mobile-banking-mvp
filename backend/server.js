@@ -5,6 +5,7 @@ import cors from "cors"
 import jwt from "jsonwebtoken"
 import { fineractService } from "./services/fineractService.js"
 import { SocketService } from "./services/socketService.js"
+import otpRouter from "./routes/otpAuth.js"
 
 const requiredEnvVars = [
   "FINERACT_URL",
