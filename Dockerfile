@@ -6,7 +6,8 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
+
+RUN npm install --production=false && npm cache clean --force
 
 # Copy source
 COPY . .
@@ -24,9 +25,10 @@ RUN apk add --no-cache dumb-init
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
 
-# Copy runtime dependencies
+# Copy package files
 COPY package*.json ./
-RUN npm ci --only=production && npm cache clean --force
+
+RUN npm install --only=production && npm cache clean --force
 
 # Copy built frontend from builder
 COPY --from=frontend-builder /app/.next ./.next
