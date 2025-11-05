@@ -19,8 +19,9 @@ RUN npm run build
 FROM node:20-alpine
 WORKDIR /app
 
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
+# Install dumb-init for proper signal handling and curl for healthchecks
+# IMPORTANT: Do NOT pass secrets as build args or copy .env files into the image. Use platform secrets at runtime.
+RUN apk add --no-cache dumb-init curl
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
