@@ -20,6 +20,15 @@ export default function OTPVerificationPage() {
     const email = localStorage.getItem("userEmail") || ""
     setUserEmail(email)
 
+    // Auto-send OTP when arriving at the page
+    if (email) {
+      fetch('/api/otp/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      }).catch((err) => console.error('[OTP] send error:', err))
+    }
+
     const timer = setInterval(() => {
       setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0))
     }, 1000)
