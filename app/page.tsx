@@ -10,6 +10,7 @@ export default function Landing() {
   const router = useRouter()
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [activeTab, setActiveTab] = useState<string | null>(null)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem("authToken")
