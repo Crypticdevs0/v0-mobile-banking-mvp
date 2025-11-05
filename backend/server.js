@@ -5,7 +5,6 @@ import cors from "cors"
 import jwt from "jsonwebtoken"
 import { fineractService } from "./services/fineractService.js"
 import { SocketService } from "./services/socketService.js"
-import otpRouter from "./routes/otpAuth.ts"
 
 const requiredEnvVars = [
   "FINERACT_URL",
@@ -61,9 +60,6 @@ const verifyToken = (req, res, next) => {
   }
 }
 
-app.use("/api/auth", otpRouter)
-
-// ===== ===== Routes =====
 app.post("/api/auth/signup", async (req, res) => {
   try {
     const { email, password, firstName, lastName } = req.body

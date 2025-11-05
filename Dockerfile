@@ -7,7 +7,7 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-RUN npm install --production=false && npm cache clean --force
+RUN npm install --production=false --legacy-peer-deps && npm cache clean --force
 
 # Copy source
 COPY . .
@@ -28,7 +28,7 @@ RUN addgroup -g 1001 -S nodejs && adduser -S nextjs -u 1001
 # Copy package files
 COPY package*.json ./
 
-RUN npm install --only=production && npm cache clean --force
+RUN npm install --only=production --legacy-peer-deps && npm cache clean --force
 
 # Copy built frontend from builder
 COPY --from=frontend-builder /app/.next ./.next
