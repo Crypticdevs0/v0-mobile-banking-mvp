@@ -21,8 +21,10 @@
     "health:check": "bash scripts/health-check.sh",
     "lint": "eslint .",
     "migrate": "bash scripts/run-migrations.sh",
+    "migrate:check": "node scripts/run-migrations.js",
     "start": "next start",
-    "start:all": "npm run build && node backend/server.js"
+    "start:all": "npm run build && node backend/server.js",
+    "start:backend": "node backend/server.js"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",
