@@ -11,7 +11,7 @@ import { createClient } from "@/lib/supabase/client"
 
 export default function SignUpPage() {
   const router = useRouter()
-  const supabase = createClient()
+  const [supabase] = useState(() => createClient())
   const [step, setStep] = useState(0)
   const [accountType, setAccountType] = useState<"checking" | "business" | "invest" | "joint" | null>(null)
   const [loading, setLoading] = useState(false)
