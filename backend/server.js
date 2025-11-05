@@ -39,6 +39,9 @@ const socketService = new SocketService(io)
 app.use(cors())
 app.use(express.json())
 
+// Mount backend routers
+app.use('/api/otp', otpRouter)
+
 // Logger middleware
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`)
