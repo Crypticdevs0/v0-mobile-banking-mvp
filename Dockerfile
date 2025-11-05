@@ -59,4 +59,6 @@ EXPOSE 3000 3001
 
 # Start with dumb-init for proper signal handling
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["node", "backend/server.js"]
+
+# If Next standalone server exists, run it; otherwise fall back to backend/server.js
+CMD ["sh", "-c", "if [ -f ./server.js ]; then node server.js; else node backend/server.js; fi"]
