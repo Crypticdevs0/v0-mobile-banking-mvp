@@ -1,36 +1,26 @@
 import express from "express"
-import { createClient as createSupabase } from "@supabase/supabase-js"
 import jwt from "jsonwebtoken"
 import { fineractService } from "../services/fineractService.js"
 import { supabaseOperations } from "../../lib/supabase/supabaseService.js"
 
 const router = express.Router()
 
-// Initialize Supabase client for backend operations
-const supabase = createSupabase(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
-
-// Validate Supabase JWT token
-const verifySupabaseToken = async (req: any, res: any, next: any) => {
+// Simple token verifier using our JWT (no Supabase)
+const verifyToken = (req: any, res: any, next: any) => {
   const token = req.headers.authorization?.split(" ")[1]
-
-  if (!token) {
-    return res.status(401).json({ error: "No token provided" })
-  }
-
+  if (!token) return res.status(401).json({ error: "No token provided" })
   try {
-    const { data, error } = await supabase.auth.getUser(token)
-    if (error || !data.user) {
-      return res.status(401).json({ error: "Invalid token" })
-    }
-
-    req.user = data.user
+    const jwtSecret = process.env.JWT_SECRET
+    if (!jwtSecret) return res.status(500).json({ error: "Server misconfiguration" })
+    const decoded: any = jwt.verify(token, jwtSecret)
+    req.user = { id: decoded.userId, email: decoded.email }
     next()
-  } catch (error) {
-    res.status(401).json({ error: "Token verification failed" })
+  } catch (e) {
+    return res.status(401).json({ error: "Invalid token" })
   }
 }
 
-// Signup with Supabase Auth + Fineract
+// Signup: create local user profile + fineract client/account
 router.post("/signup", async (req: any, res: any) => {
   try {
     const { email, password, firstName, lastName } = req.body
@@ -39,22 +29,11 @@ router.post("/signup", async (req: any, res: any) => {
       return res.status(400).json({ error: "Missing required fields" })
     }
 
-    // Create auth user in Supabase
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email,
-      password,
-      user_metadata: {
-        first_name: firstName,
-        last_name: lastName,
-      },
-      email_confirm: true, // Auto-confirm for demo
-    })
+    // ensure user doesn't already exist
+    const existing = await supabaseOperations.getUserByEmail(email)
+    if (existing) return res.status(400).json({ error: "User already exists" })
 
-    if (authError || !authData.user) {
-      return res.status(400).json({ error: authError?.message || "Failed to create auth user" })
-    }
-
-    const userId = authData.user.id
+    const userId = `user_${Date.now()}_${Math.floor(Math.random() * 10000)}`
 
     // Create Fineract client
     const fineractClient = await fineractService.createClient(firstName, lastName, email)
@@ -64,8 +43,8 @@ router.post("/signup", async (req: any, res: any) => {
     const fineractAccount = await fineractService.createSavingsAccount(fineractClientId)
     const fineractAccountId = fineractAccount.resourceId
 
-    // Create user profile in Supabase
-    await supabaseOperations.createUserProfile(userId, email, firstName, lastName, fineractClientId)
+    // Create user profile (with password stored for demo)
+    await supabaseOperations.createUserWithPassword(userId, email, password, firstName, lastName, fineractClientId)
 
     // Create account record
     await supabaseOperations.createAccount(userId, fineractAccountId, 0, "")
@@ -94,7 +73,7 @@ router.post("/signup", async (req: any, res: any) => {
   }
 })
 
-// Login with Supabase Auth
+// Login: verify against local user store and issue JWT
 router.post("/login", async (req: any, res: any) => {
   try {
     const { email, password } = req.body
@@ -103,19 +82,11 @@ router.post("/login", async (req: any, res: any) => {
       return res.status(400).json({ error: "Email and password required" })
     }
 
-    // Authenticate with Supabase
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    const user = await supabaseOperations.verifyUserPassword(email, password)
+    if (!user) return res.status(401).json({ error: "Invalid credentials" })
 
-    if (authError || !authData.user) {
-      return res.status(401).json({ error: "Invalid credentials" })
-    }
-
-    // Fetch user profile
-    const userProfile = await supabaseOperations.getUserProfile(authData.user.id)
-    const account = await supabaseOperations.getAccountByUserId(authData.user.id)
+    const userProfile = await supabaseOperations.getUserProfile(user.id)
+    const account = await supabaseOperations.getAccountByUserId(user.id)
 
     // Get Fineract balance
     const balance = await fineractService.getAccountBalance(account.fineract_account_id)
@@ -129,8 +100,8 @@ router.post("/login", async (req: any, res: any) => {
 
     const token = jwt.sign(
       {
-        userId: authData.user.id,
-        email: authData.user.email,
+        userId: user.id,
+        email: user.email,
         accountId: account.fineract_account_id,
       },
       jwtSecret,
@@ -141,7 +112,7 @@ router.post("/login", async (req: any, res: any) => {
       success: true,
       token,
       user: {
-        id: authData.user.id,
+        id: user.id,
         email: userProfile.email,
         name: `${userProfile.first_name} ${userProfile.last_name}`,
         accountId: account.fineract_account_id,
@@ -158,7 +129,7 @@ router.post("/login", async (req: any, res: any) => {
 })
 
 // Protected route example: Sync balance
-router.post("/sync-balance", verifySupabaseToken, async (req: any, res: any) => {
+router.post("/sync-balance", verifyToken, async (req: any, res: any) => {
   try {
     const userId = req.user.id
     const account = await supabaseOperations.getAccountByUserId(userId)
