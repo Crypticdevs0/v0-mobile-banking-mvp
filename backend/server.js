@@ -1,11 +1,13 @@
 import express from "express"
+import dotenv from "dotenv"
+dotenv.config()
 import { createServer } from "http"
 import { Server } from "socket.io"
 import cors from "cors"
 import jwt from "jsonwebtoken"
 import { fineractService } from "./services/fineractService.js"
 import { SocketService } from "./services/socketService.js"
-import otpRouter from "./routes/otpAuth.js"
+import otpRouter from "./routes/otpAuth.ts"
 
 const requiredEnvVars = [
   "FINERACT_URL",
@@ -13,7 +15,7 @@ const requiredEnvVars = [
   "FINERACT_USERNAME",
   "FINERACT_PASSWORD",
   "JWT_SECRET",
-  "NEXT_PUBLIC_SUPABASE_URL",
+  "SUPABASE_URL",
   "SUPABASE_SERVICE_ROLE_KEY",
 ]
 

@@ -3,9 +3,6 @@ import { createClient as createSupabase } from "@supabase/supabase-js"
 
 const router = express.Router()
 
-// Initialize Supabase server client using SERVICE ROLE key
-const supabase = createSupabase(process.env.NEXT_PUBLIC_SUPABASE_URL || "", process.env.SUPABASE_SERVICE_ROLE_KEY || "")
-
 // Simple in-memory rate limits (per-email). For production, use Redis or a persistent store.
 const sendRateLimit: Map<string, { count: number; firstAt: number }> = new Map()
 const MAX_SENDS = 5
@@ -17,6 +14,7 @@ function generateOTP(): string {
 
 router.post("/send-otp", async (req, res) => {
   try {
+    const supabase = createSupabase(process.env.SUPABASE_URL || "", process.env.SUPABASE_SERVICE_ROLE_KEY || "")
     const { email } = req.body
     if (!email) return res.status(400).json({ error: "Email required" })
 
@@ -65,6 +63,7 @@ router.post("/send-otp", async (req, res) => {
 
 router.post("/verify-otp", async (req, res) => {
   try {
+    const supabase = createSupabase(process.env.SUPABASE_URL || "", process.env.SUPABASE_SERVICE_ROLE_KEY || "")
     const { email, otp } = req.body
     if (!email || !otp) return res.status(400).json({ error: "Email and OTP required" })
 
@@ -122,6 +121,7 @@ router.post("/verify-otp", async (req, res) => {
 
 router.post("/resend-otp", async (req, res) => {
   try {
+    const supabase = createSupabase(process.env.SUPABASE_URL || "", process.env.SUPABASE_SERVICE_ROLE_KEY || "")
     const { email } = req.body
     if (!email) return res.status(400).json({ error: "Email required" })
 
