@@ -1,5 +1,6 @@
 import express from "express"
-import { createClient as createSupabase } from "@supabase/supabase-js"
+import fs from "fs"
+import path from "path"
 
 const router = express.Router()
 
@@ -8,13 +9,30 @@ const sendRateLimit: Map<string, { count: number; firstAt: number }> = new Map()
 const MAX_SENDS = 5
 const WINDOW_MS = 60 * 60 * 1000 // 1 hour
 
+const OTP_FILE = path.join(process.cwd(), "backend", "otp_codes.json")
+
+function ensureOtpFile() {
+  if (!fs.existsSync(OTP_FILE)) {
+    fs.writeFileSync(OTP_FILE, JSON.stringify([]))
+  }
+}
+
+function readOtps() {
+  ensureOtpFile()
+  const raw = fs.readFileSync(OTP_FILE, "utf-8")
+  return JSON.parse(raw)
+}
+
+function writeOtps(data: any[]) {
+  fs.writeFileSync(OTP_FILE, JSON.stringify(data, null, 2))
+}
+
 function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString()
 }
 
 router.post("/send-otp", async (req, res) => {
   try {
-    const supabase = createSupabase(process.env.SUPABASE_URL || "", process.env.SUPABASE_SERVICE_ROLE_KEY || "")
     const { email } = req.body
     if (!email) return res.status(400).json({ error: "Email required" })
 
@@ -34,25 +52,11 @@ router.post("/send-otp", async (req, res) => {
     const otp = generateOTP()
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString() // 10 minutes
 
-    // Store OTP in Supabase table 'otp_codes' with limited visibility
-    const { error } = await supabase.from("otp_codes").insert([
-      {
-        email,
-        code: otp,
-        expires_at: expiresAt,
-        attempts: 0,
-        max_attempts: 5,
-        created_at: new Date().toISOString(),
-      },
-    ])
-
-    if (error) {
-      console.error("[OTP] Supabase insert error:", error)
-      return res.status(500).json({ error: "Failed to create OTP" })
-    }
+    const otps = readOtps()
+    otps.push({ id: `otp_${Date.now()}_${Math.floor(Math.random()*10000)}`, email, code: otp, expires_at: expiresAt, attempts: 0, max_attempts: 5, created_at: new Date().toISOString() })
+    writeOtps(otps)
 
     // NOTE: Integration with an email provider should be here. Do NOT log OTPs in production.
-    // For demo/dev, don't log secret OTPs.
 
     res.json({ success: true, message: "OTP generated and stored" })
   } catch (err) {
@@ -63,33 +67,21 @@ router.post("/send-otp", async (req, res) => {
 
 router.post("/verify-otp", async (req, res) => {
   try {
-    const supabase = createSupabase(process.env.SUPABASE_URL || "", process.env.SUPABASE_SERVICE_ROLE_KEY || "")
     const { email, otp } = req.body
     if (!email || !otp) return res.status(400).json({ error: "Email and OTP required" })
 
-    // Fetch the latest OTP for this email
-    const { data, error } = await supabase
-      .from("otp_codes")
-      .select("*")
-      .eq("email", email)
-      .eq("code", otp)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle()
+    const otps = readOtps()
+    const idx = otps.findIndex((o: any) => o.email === email && o.code === otp)
+    const otpRecord = idx !== -1 ? otps[idx] : null
 
-    if (error) {
-      console.error("[OTP] Supabase select error:", error)
-      return res.status(500).json({ error: "Verification failed" })
-    }
-
-    const otpRecord = data
     if (!otpRecord) {
       return res.status(401).json({ error: "Invalid or expired OTP" })
     }
 
     if (new Date(otpRecord.expires_at) < new Date()) {
-      // Optionally delete expired codes
-      await supabase.from("otp_codes").delete().eq("id", otpRecord.id)
+      // remove expired
+      otps.splice(idx, 1)
+      writeOtps(otps)
       return res.status(401).json({ error: "OTP expired" })
     }
 
@@ -97,11 +89,9 @@ router.post("/verify-otp", async (req, res) => {
       return res.status(401).json({ error: "OTP max attempts exceeded" })
     }
 
-    // Mark OTP as verified
-    await supabase.from("otp_codes").update({ verified_at: new Date().toISOString() }).eq("id", otpRecord.id)
-
-    // Optionally delete used OTPs
-    await supabase.from("otp_codes").delete().eq("id", otpRecord.id)
+    // Mark OTP as used (remove it)
+    otps.splice(idx, 1)
+    writeOtps(otps)
 
     // Generate account and routing numbers (demo values)
     const accountNumber = Math.floor(100000000 + Math.random() * 900000000).toString()
@@ -121,7 +111,6 @@ router.post("/verify-otp", async (req, res) => {
 
 router.post("/resend-otp", async (req, res) => {
   try {
-    const supabase = createSupabase(process.env.SUPABASE_URL || "", process.env.SUPABASE_SERVICE_ROLE_KEY || "")
     const { email } = req.body
     if (!email) return res.status(400).json({ error: "Email required" })
 
@@ -141,25 +130,12 @@ router.post("/resend-otp", async (req, res) => {
     const otp = generateOTP()
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString()
 
-    // Delete old OTPs for this email and insert a new one
-    await supabase.from("otp_codes").delete().eq("email", email)
-    const { error } = await supabase.from("otp_codes").insert([
-      {
-        email,
-        code: otp,
-        expires_at: expiresAt,
-        attempts: 0,
-        max_attempts: 5,
-        created_at: new Date().toISOString(),
-      },
-    ])
+    const otps = readOtps()
+    // remove old
+    const remaining = otps.filter((o: any) => o.email !== email)
+    remaining.push({ id: `otp_${Date.now()}_${Math.floor(Math.random()*10000)}`, email, code: otp, expires_at: expiresAt, attempts: 0, max_attempts: 5, created_at: new Date().toISOString() })
+    writeOtps(remaining)
 
-    if (error) {
-      console.error("[OTP] Supabase insert error (resend):", error)
-      return res.status(500).json({ error: "Failed to resend OTP" })
-    }
-
-    // Do not log OTP in production
     res.json({ success: true, message: "OTP resent" })
   } catch (err) {
     console.error("[OTP] resend error:", err)
