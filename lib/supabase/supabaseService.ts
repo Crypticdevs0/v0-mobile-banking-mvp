@@ -47,6 +47,27 @@ const serverOps = {
     return user
   },
 
+  async getUserByEmail(email: string) {
+    const data = readData()
+    return data.users.find((u: any) => u.email === email) || null
+  },
+
+  async createUserWithPassword(userId: string, email: string, password: string, firstName: string, lastName: string, fineractClientId: string) {
+    const data = readData()
+    const existing = data.users.find((u: any) => u.email === email)
+    if (existing) throw new Error('User already exists')
+    const user = { id: userId, email, password, first_name: firstName, last_name: lastName, fineract_client_id: fineractClientId }
+    data.users.push(user)
+    writeData(data)
+    return user
+  },
+
+  async verifyUserPassword(email: string, password: string) {
+    const data = readData()
+    const user = data.users.find((u: any) => u.email === email && u.password === password)
+    return user || null
+  },
+
   async createAccount(userId: string, fineractAccountId: string, balance: number, accountNumber: string) {
     const data = readData()
     const account = { id: generateId("acct"), user_id: userId, fineract_account_id: fineractAccountId, balance, account_number: accountNumber }
@@ -141,6 +162,30 @@ const clientOps = {
     const user = users.find((u: any) => u.id === userId)
     if (!user) throw new Error("User not found")
     return user
+  },
+
+  async getUserByEmail(email: string) {
+    const raw = localStorage.getItem("db_users")
+    const users = raw ? JSON.parse(raw) : []
+    return users.find((u: any) => u.email === email) || null
+  },
+
+  async createUserWithPassword(userId: string, email: string, password: string, firstName: string, lastName: string, fineractClientId: string) {
+    const raw = localStorage.getItem("db_users")
+    const users = raw ? JSON.parse(raw) : []
+    const existing = users.find((u: any) => u.email === email)
+    if (existing) throw new Error('User already exists')
+    const user = { id: userId, email, password, first_name: firstName, last_name: lastName, fineract_client_id: fineractClientId }
+    users.push(user)
+    localStorage.setItem("db_users", JSON.stringify(users))
+    return user
+  },
+
+  async verifyUserPassword(email: string, password: string) {
+    const raw = localStorage.getItem("db_users")
+    const users = raw ? JSON.parse(raw) : []
+    const user = users.find((u: any) => u.email === email && u.password === password)
+    return user || null
   },
   async createAccount(userId: string, fineractAccountId: string, balance: number, accountNumber: string) {
     const raw = localStorage.getItem("db_accounts")
