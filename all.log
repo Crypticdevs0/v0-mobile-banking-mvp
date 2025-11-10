@@ -1,0 +1,24 @@
+
+> my-v0-project@0.1.0 dev:all
+> concurrently "npm run dev:frontend" "npm run dev:backend"
+
+[0]
+[0] > my-v0-project@0.1.0 dev:frontend
+[0] > next dev
+[0]
+[1]
+[1] > my-v0-project@0.1.0 dev:backend
+[1] > tsx backend/server.js
+[1]
+[0]    ▲ Next.js 15.5.6
+[0]    - Local:        http://localhost:3000
+[0]    - Network:      http://192.168.0.2:3000
+[0]    - Environments: .env.local, .env
+[0]    - Experiments (use with caution):
+[0]      · serverActions
+[0]
+[0]  ✓ Starting...
+[1] [dotenv@17.2.3] injecting env (8) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+[1] ✅ Banking server running on port 3001
+[1] ✅ Socket.io listening for connections
+[1] ✅ Environment: development

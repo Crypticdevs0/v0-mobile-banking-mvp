@@ -1,7 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Improve build performance and minify with SWC
-  swcMinify: true,
   compress: true,
   output: 'standalone',
 
