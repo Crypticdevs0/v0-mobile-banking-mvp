@@ -293,33 +293,8 @@ app.post("/api/transfers", verifyToken, async (req, res) => {
   }
 })
 
-// ===== Transactions Routes =====
-app.get("/api/transactions", verifyToken, async (req, res) => {
-  try {
-    const transactions = await fineractService.getAccountTransactions(req.user.accountId)
-
-    // Transform Fineract transaction format to app format
-    const formattedTransactions = (transactions.transactionItems || []).map((tx) => ({
-      id: tx.id,
-      type: tx.type?.value === "DEPOSIT" ? "received" : "sent",
-      amount: tx.amount,
-      description: tx.description || (tx.type?.value === "DEPOSIT" ? "Deposit" : "Withdrawal"),
-      timestamp: new Date(tx.date),
-    }))
-
-    res.json({
-      transactions: formattedTransactions,
-      pagination: {
-        page: 1,
-        limit: 10,
-        total: formattedTransactions.length,
-      },
-    })
-  } catch (error) {
-    console.error("Error fetching transactions:", error)
-    res.status(500).json({ error: "Failed to fetch transactions" })
-  }
-})
+import transactionsRouter from './routes/transactions.js'
+app.use('/api/transactions', verifyToken, transactionsRouter)
 
 // ===== Socket.io Events =====
 io.on("connection", (socket) => {
