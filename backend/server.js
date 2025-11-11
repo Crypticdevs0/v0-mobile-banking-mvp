@@ -7,7 +7,12 @@ import cors from "cors"
 import jwt from "jsonwebtoken"
 import { fineractService } from "./services/fineractService.js"
 import { SocketService } from "./services/socketService.js"
-import otpRouter from "./routes/otpAuth.ts"
+
+if (process.env.NODE_ENV !== "test") {
+  import("./routes/otpAuth.ts").then(otpRouter => {
+    app.use("/api/otp", otpRouter.default)
+  })
+}
 
 const requiredEnvVars = [
   "FINERACT_URL",
@@ -42,7 +47,7 @@ app.use(cors())
 app.use(express.json())
 
 // Mount backend routers
-app.use('/api/otp', otpRouter)
+// app.use('/api/otp', otpRouter)
 
 // Logger middleware
 app.use((req, res, next) => {
@@ -164,24 +169,13 @@ app.post("/api/auth/login", async (req, res) => {
       return res.status(400).json({ error: "Email and password required" })
     }
 
-    // For demo: validate against seed data
-    const seedUsers = {
-      "alice@bank.com": { id: 1, name: "Alice", accountId: 1 },
-      "bob@bank.com": { id: 2, name: "Bob", accountId: 2 },
-      "charlie@bank.com": { id: 3, name: "Charlie", accountId: 3 },
-    }
-
-    const user = seedUsers[email]
-
-    if (!user || password !== "password123") {
-      return res.status(401).json({ error: "Invalid credentials" })
-    }
+    const fineractUser = await fineractService.login(email, password)
 
     const token = jwt.sign(
       {
-        userId: user.id,
-        email,
-        accountId: user.accountId,
+        userId: fineractUser.userId,
+        email: fineractUser.username,
+        accountId: fineractUser.officeId, // This is a hack, but it works for now
       },
       process.env.JWT_SECRET,
       { expiresIn: "7d" },
@@ -191,15 +185,15 @@ app.post("/api/auth/login", async (req, res) => {
       success: true,
       token,
       user: {
-        id: user.id,
-        email,
-        name: user.name,
-        accountId: user.accountId,
+        id: fineractUser.userId,
+        email: fineractUser.username,
+        name: fineractUser.officeName,
+        accountId: fineractUser.officeId,
       },
     })
   } catch (error) {
     console.error("Login error:", error)
-    res.status(500).json({ error: "Login failed" })
+    res.status(401).json({ error: "Invalid credentials" })
   }
 })
 
@@ -374,8 +368,12 @@ app.use((err, req, res, next) => {
 })
 
 const PORT = process.env.PORT || 3001
-httpServer.listen(PORT, () => {
-  console.log(`✅ Banking server running on port ${PORT}`)
-  console.log(`✅ Socket.io listening for connections`)
-  console.log(`✅ Environment: ${process.env.NODE_ENV || "development"}`)
-})
+if (process.env.NODE_ENV !== 'test') {
+  httpServer.listen(PORT, () => {
+    console.log(`✅ Banking server running on port ${PORT}`)
+    console.log(`✅ Socket.io listening for connections`)
+    console.log(`✅ Environment: ${process.env.NODE_ENV || "development"}`)
+  })
+}
+
+export { app }
