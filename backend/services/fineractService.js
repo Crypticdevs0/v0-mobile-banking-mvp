@@ -180,4 +180,12 @@ export const fineractService = {
       throw error
     }
   },
+
+  login: async (username, password) => {
+    const result = await makeFineractRequest(
+      `/authentication?username=${username}&password=${password}`,
+      "POST"
+    )
+    return result
+  }
 }

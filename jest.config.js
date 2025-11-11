@@ -1,11 +1,8 @@
 export default {
-  transform: {},
-  testEnvironment: 'node',
-  globals: {
-    'ts-jest': {
-      useESM: true,
-    },
+  "transform": {
+    "^.+\\.tsx?$": ["ts-jest", { "useESM": true }]
   },
+  testEnvironment: 'node',
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },

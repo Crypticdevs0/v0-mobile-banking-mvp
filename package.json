@@ -26,7 +26,7 @@
     "start": "next start",
     "start:all": "npm run build && node backend/server.js",
     "start:backend": "node backend/server.js",
-    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
+    "test": "NODE_ENV=test node --env-file=.env.test --experimental-vm-modules node_modules/jest/bin/jest.js --silent"
   },
   "dependencies": {
     "@emotion/is-prop-valid": "latest",
