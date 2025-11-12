@@ -10,6 +10,10 @@
 [1] > my-v0-project@0.1.0 dev:backend
 [1] > tsx backend/server.js
 [1]
+[1] [dotenv@17.2.3] injecting env (8) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+[1] ✅ Banking server running on port 3001
+[1] ✅ Socket.io listening for connections
+[1] ✅ Environment: development
 [0]    ▲ Next.js 15.5.6
 [0]    - Local:        http://localhost:3000
 [0]    - Network:      http://192.168.0.2:3000
@@ -18,7 +22,4 @@
 [0]      · serverActions
 [0]
 [0]  ✓ Starting...
-[1] [dotenv@17.2.3] injecting env (8) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
-[1] ✅ Banking server running on port 3001
-[1] ✅ Socket.io listening for connections
-[1] ✅ Environment: development
+[0]  ✓ Ready in 3.6s

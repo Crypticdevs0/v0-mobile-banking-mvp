@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Download, ArrowLeft, Upload } from "lucide-react"
@@ -15,6 +15,11 @@ export default function DepositsPage() {
   const [method, setMethod] = useState("bank-transfer")
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [accountNumber, setAccountNumber] = useState("")
+
+  useEffect(() => {
+    setAccountNumber(localStorage.getItem("accountNumber") || "")
+  }, [])
 
   const handleDeposit = async () => {
     if (!amount) return
@@ -103,7 +108,7 @@ export default function DepositsPage() {
                     <strong>Routing #:</strong> 021000021
                   </p>
                   <p>
-                    <strong>Account #:</strong> {localStorage.getItem("accountNumber") || "●●●●●●●●●●"}
+                    <strong>Account #:</strong> {accountNumber || "●●●●●●●●●●"}
                   </p>
                 </div>
                 <p className="text-xs text-foreground-secondary">Use these details to transfer funds from your bank.</p>
