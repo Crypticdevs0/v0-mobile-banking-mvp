@@ -5,6 +5,7 @@ const router = express.Router();
 
 router.get('/', async (req, res) => {
   try {
+    const { page = 1, limit = 10 } = req.query;
     const transactions = await fineractService.getAccountTransactions(req.user.accountId);
 
     // Transform Fineract transaction format to app format
@@ -16,11 +17,13 @@ router.get('/', async (req, res) => {
       timestamp: new Date(tx.date),
     }));
 
+    const paginatedTransactions = formattedTransactions.slice((page - 1) * limit, page * limit);
+
     res.json({
-      transactions: formattedTransactions,
+      transactions: paginatedTransactions,
       pagination: {
-        page: 1,
-        limit: 10,
+        page: parseInt(page, 10),
+        limit: parseInt(limit, 10),
         total: formattedTransactions.length,
       },
     });

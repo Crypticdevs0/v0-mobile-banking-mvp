@@ -149,40 +149,33 @@ export default function SignUpPage() {
     if (!validateStep()) return
     setLoading(true)
     try {
-      // Sign up with Supabase
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          emailRedirectTo: process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL || `${window.location.origin}/dashboard`,
-          data: {
-            first_name: formData.firstName,
-            last_name: formData.lastName,
-            phone: formData.phone,
-            account_type: accountType,
-          },
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          mobileNo: formData.phone,
+        }),
       })
 
-      if (authError) throw authError
+      const data = await response.json()
 
-      if (authData.user) {
-        // Create user profile in Supabase
-        const { error: profileError } = await supabase.from("users").insert({
-          id: authData.user.id,
-          email: formData.email,
-          first_name: formData.firstName,
-          last_name: formData.lastName,
-        })
-
-        if (profileError) {
-          console.error("Profile creation error:", profileError)
-        }
-
-        // Store email for OTP verification
-        localStorage.setItem("userEmail", formData.email)
-        router.push("/auth/otp-verification")
+      if (!response.ok) {
+        throw new Error(data.error || "Signup failed")
       }
+
+      // Store auth token and user data
+      localStorage.setItem("authToken", data.token)
+      localStorage.setItem("user", JSON.stringify(data.user))
+
+      // Store email for OTP verification
+      localStorage.setItem("userEmail", formData.email)
+      router.push("/auth/otp-verification")
     } catch (err: any) {
       setError(err.message || "Signup failed. Please try again.")
     } finally {
