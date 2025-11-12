@@ -7,6 +7,7 @@ import cors from "cors"
 import jwt from "jsonwebtoken"
 import { fineractService } from "./services/fineractService.js"
 import { SocketService } from "./services/socketService.js"
+import { z } from "zod"
 
 if (process.env.NODE_ENV !== "test") {
   import("./routes/otpAuth.ts").then(otpRouter => {
@@ -42,6 +43,19 @@ const io = new Server(httpServer, {
 
 const socketService = new SocketService(io)
 
+const signupSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  mobileNo: z.string().min(10),
+})
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string(),
+})
+
 // Middleware
 app.use(cors())
 app.use(express.json())
@@ -73,12 +87,7 @@ const verifyToken = (req, res, next) => {
 
 app.post("/api/auth/signup", async (req, res) => {
   try {
-    const { email, password, firstName, lastName } = req.body
-
-    // Validate input
-    if (!email || !password || !firstName || !lastName) {
-      return res.status(400).json({ error: "Missing required fields" })
-    }
+    const { email, password, firstName, lastName, mobileNo } = signupSchema.parse(req.body)
 
     // Create Fineract client
     const clientResponse = await fetch(
@@ -93,7 +102,7 @@ app.post("/api/auth/signup", async (req, res) => {
           firstname: firstName,
           lastname: lastName,
           email: email,
-          mobileNo: "1234567890",
+          mobileNo: mobileNo,
           dateFormat: "dd MMMM yyyy",
           locale: "en",
           active: true,
@@ -156,6 +165,9 @@ app.post("/api/auth/signup", async (req, res) => {
       },
     })
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: error.errors })
+    }
     console.error("Signup error:", error)
     res.status(500).json({ error: "Signup failed" })
   }
@@ -163,11 +175,7 @@ app.post("/api/auth/signup", async (req, res) => {
 
 app.post("/api/auth/login", async (req, res) => {
   try {
-    const { email, password } = req.body
-
-    if (!email || !password) {
-      return res.status(400).json({ error: "Email and password required" })
-    }
+    const { email, password } = loginSchema.parse(req.body)
 
     const fineractUser = await fineractService.login(email, password)
 
@@ -192,6 +200,9 @@ app.post("/api/auth/login", async (req, res) => {
       },
     })
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: error.errors })
+    }
     console.error("Login error:", error)
     res.status(401).json({ error: "Invalid credentials" })
   }
