@@ -26,17 +26,25 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
       })
 
-      if (authError) throw authError
+      const data = await response.json()
 
-      if (data.user) {
-        localStorage.setItem("userEmail", email)
-        router.push("/dashboard")
+      if (!response.ok) {
+        throw new Error(data.error || "Login failed")
       }
+
+      // Store auth token and user data
+      localStorage.setItem("authToken", data.token)
+      localStorage.setItem("user", JSON.stringify(data.user))
+
+      router.push("/dashboard")
     } catch (err: any) {
       setError(err.message || "Login failed")
     } finally {
@@ -142,9 +150,9 @@ export default function LoginPage() {
 
           {/* Links */}
           <div className="space-y-3 text-center text-xs sm:text-sm">
-            <a href="#" className="block text-blue-600 hover:underline">
-              Forgot password?
-            </a>
+            <Link href="/auth/forgot-password">
+              <span className="block text-blue-600 hover:underline">Forgot password?</span>
+            </Link>
           </div>
         </div>
 

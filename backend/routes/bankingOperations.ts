@@ -3,27 +3,19 @@ import { verifyToken } from "../middleware/auth.ts"
 
 const router = express.Router()
 
+import { fineractService } from "../services/fineractService.js"
+
 // Deposits
 router.post("/deposits", verifyToken, async (req, res) => {
   try {
-    const { amount, method } = req.body
+    const { amount } = req.body
 
     if (!amount || amount <= 0) {
       return res.status(400).json({ error: "Invalid deposit amount" })
     }
 
-    // Simulate deposit processing
-    const deposit = {
-      id: Math.random().toString(36).substring(7),
-      userId: req.user.userId,
-      amount,
-      method,
-      status: "pending",
-      createdAt: new Date(),
-      estimatedCompletion: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days
-    }
+    const deposit = await fineractService.depositToAccount(req.user.accountId, amount)
 
-    // In production, save to database and call Fineract API
     res.json({
       success: true,
       deposit,
@@ -38,21 +30,14 @@ router.post("/deposits", verifyToken, async (req, res) => {
 // Bill Payments
 router.post("/payments", verifyToken, async (req, res) => {
   try {
-    const { billerId, amount, paymentDate } = req.body
+    const { amount } = req.body
 
-    if (!billerId || !amount || amount <= 0) {
+    if (!amount || amount <= 0) {
       return res.status(400).json({ error: "Invalid payment details" })
     }
 
-    const payment = {
-      id: Math.random().toString(36).substring(7),
-      userId: req.user.userId,
-      billerId,
-      amount,
-      paymentDate,
-      status: "scheduled",
-      createdAt: new Date(),
-    }
+    // For simplicity, we'll treat a bill payment as a withdrawal
+    const payment = await fineractService.withdrawFromAccount(req.user.accountId, amount)
 
     res.json({
       success: true,

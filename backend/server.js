@@ -9,11 +9,9 @@ import { fineractService } from "./services/fineractService.js"
 import { SocketService } from "./services/socketService.js"
 import { z } from "zod"
 
-if (process.env.NODE_ENV !== "test") {
-  import("./routes/otpAuth.ts").then(otpRouter => {
-    app.use("/api/otp", otpRouter.default)
-  })
-}
+const app = express()
+import routes from "./routes/index.js"
+app.use("/api", routes)
 
 const requiredEnvVars = [
   "FINERACT_URL",
@@ -31,8 +29,6 @@ if (missingEnvVars.length > 0) {
   console.error("Please set these variables before starting the server.")
   process.exit(1)
 }
-
-const app = express()
 const httpServer = createServer(app)
 const io = new Server(httpServer, {
   cors: {
@@ -63,27 +59,13 @@ app.use(express.json())
 // Mount backend routers
 // app.use('/api/otp', otpRouter)
 
+import { verifyToken } from "./middleware/auth.ts"
+
 // Logger middleware
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`)
   next()
 })
-
-const verifyToken = (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1]
-
-  if (!token) {
-    return res.status(401).json({ error: "No token provided" })
-  }
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    req.user = decoded
-    next()
-  } catch (error) {
-    res.status(401).json({ error: "Invalid token" })
-  }
-}
 
 app.post("/api/auth/signup", async (req, res) => {
   try {
@@ -233,73 +215,13 @@ app.get("/api/accounts/:accountId", verifyToken, async (req, res) => {
   }
 })
 
-// ===== Transfer Routes =====
-app.post("/api/transfers", verifyToken, async (req, res) => {
-  try {
-    const { recipientAccountId, amount, description } = req.body
-
-    if (!recipientAccountId || !amount || amount <= 0) {
-      return res.status(400).json({ error: "Invalid transfer data" })
-    }
-
-    const transfer = await fineractService.transferFunds(req.user.accountId, recipientAccountId, amount)
-
-    // Emit transfer completion to sender
-    socketService.emitTransferSent(req.user.userId, {
-      id: transfer.transactionId,
-      toAccountId: recipientAccountId,
-      amount,
-      description,
-      status: "completed",
-    })
-
-    // Emit transfer received notification to recipient (demo: hardcoded userId mapping)
-    // In production, query database to find recipient's userId from accountId
-    const recipientUserIdMap = {
-      1: 1,
-      2: 2,
-      3: 3,
-    }
-    const recipientUserId = recipientUserIdMap[recipientAccountId]
-    if (recipientUserId) {
-      socketService.emitTransferReceived(recipientUserId, {
-        id: transfer.transactionId,
-        fromAccountId: req.user.accountId,
-        from: req.user.email,
-        amount,
-        description,
-        status: "completed",
-      })
-
-      // Update recipient's balance in real-time
-      try {
-        const recipientBalance = await fineractService.getAccountBalance(recipientAccountId)
-        socketService.emitBalanceUpdate(recipientUserId, recipientBalance.balance, recipientAccountId)
-      } catch (error) {
-        console.error("Error fetching recipient balance:", error)
-      }
-    }
-
-    // Update sender's balance
-    try {
-      const senderBalance = await fineractService.getAccountBalance(req.user.accountId)
-      socketService.emitBalanceUpdate(req.user.userId, senderBalance.balance, req.user.accountId)
-    } catch (error) {
-      console.error("Error fetching sender balance:", error)
-    }
-
-    res.json({
-      success: true,
-      transfer,
-    })
-  } catch (error) {
-    console.error("Transfer error:", error)
-    res.status(500).json({ error: error.message || "Transfer failed" })
-  }
-})
-
 import transactionsRouter from './routes/transactions.js'
 app.use('/api/transactions', verifyToken, transactionsRouter)
+if (process.env.NODE_ENV !== "test") {
+  import("./routes/transfers.ts").then(transfersRouter => {
+    app.use('/api/transfers', transfersRouter.default)
+  })
+}
 
 // ===== Socket.io Events =====
 io.on("connection", (socket) => {
