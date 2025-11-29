@@ -1,14 +1,40 @@
 version: '3.8'
 
 services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: banking-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      NEXT_PUBLIC_SOCKET_URL: http://backend:3001
+      NODE_ENV: production
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - banking-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
   backend:
     build:
       context: .
       dockerfile: Dockerfile.backend
+    container_name: banking-backend
     ports:
       - "3001:3001"
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 3001
       SUPABASE_URL: ${SUPABASE_URL}
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
@@ -18,12 +44,11 @@ services:
       FINERACT_TENANT: ${FINERACT_TENANT:-default}
       FINERACT_PRODUCT_ID: ${FINERACT_PRODUCT_ID:-1}
       JWT_SECRET: ${JWT_SECRET}
-      CLIENT_URL: http://localhost:3000
+      CLIENT_URL: http://frontend:3000
+      LOG_LEVEL: info
     volumes:
       - ./backend:/app/backend
       - /app/node_modules
-    depends_on:
-      - db
     networks:
       - banking-network
     healthcheck:
@@ -32,29 +57,11 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-
-  frontend:
-    build:
-      context: .
-      target: frontend-builder
-    ports:
-      - "3000:3000"
-    environment:
-      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
-      NEXT_PUBLIC_SOCKET_URL: http://localhost:3001
-    volumes:
-      - ./app:/app/app
-      - ./components:/app/components
-      - ./hooks:/app/hooks
-      - ./lib:/app/lib
-    depends_on:
-      - backend
-    networks:
-      - banking-network
+    restart: unless-stopped
 
   db:
     image: postgres:15-alpine
+    container_name: banking-db
     environment:
       POSTGRES_DB: premier_banking
       POSTGRES_USER: postgres
@@ -69,6 +76,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
 networks:
   banking-network:

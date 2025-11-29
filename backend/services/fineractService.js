@@ -182,10 +182,21 @@ export const fineractService = {
   },
 
   login: async (username, password) => {
+    if (!username || !password) {
+      throw new Error("Username and password are required")
+    }
+
     const result = await makeFineractRequest(
-      `/authentication?username=${username}&password=${password}`,
-      "POST"
+      `/authentication`,
+      "POST",
+      { username, password }
     )
+
+    // Validate response structure
+    if (!result.userId || !result.username) {
+      throw new Error("Invalid Fineract response: missing required fields")
+    }
+
     return result
   }
 }

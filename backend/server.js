@@ -8,6 +8,10 @@ import jwt from "jsonwebtoken"
 import { fineractService } from "./services/fineractService.js"
 import { SocketService } from "./services/socketService.js"
 import { z } from "zod"
+import { requestLogger, errorHandler } from "./middleware/logger.ts"
+import { authLimiter, apiLimiter, transferLimiter } from "./middleware/rateLimit.ts"
+import { validateRequest, signupSchema, loginSchema, transferSchema } from "./middleware/validation.ts"
+import { csrfProtection, csrfTokenEndpoint } from "./middleware/csrf.ts"
 
 const app = express()
 import routes from "./routes/index.js"
@@ -34,7 +38,12 @@ const io = new Server(httpServer, {
   cors: {
     origin: process.env.CLIENT_URL || "http://localhost:3000",
     credentials: true,
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   },
+  transports: ["websocket", "polling"],
+  pingInterval: 25000,
+  pingTimeout: 60000,
 })
 
 const socketService = new SocketService(io)
@@ -53,23 +62,26 @@ const loginSchema = z.object({
 })
 
 // Middleware
-app.use(cors())
-app.use(express.json())
+app.use(cors({
+  origin: process.env.CLIENT_URL || "http://localhost:3000",
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}))
+app.use(express.json({ limit: "2mb" }))
+app.use(requestLogger)
 
 // Mount backend routers
 // app.use('/api/otp', otpRouter)
 
 import { verifyToken } from "./middleware/auth.ts"
 
-// Logger middleware
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`)
-  next()
-})
+// CSRF token endpoint
+app.get("/api/csrf-token", csrfTokenEndpoint)
 
-app.post("/api/auth/signup", async (req, res) => {
+app.post("/api/auth/signup", authLimiter, csrfProtection, validateRequest(signupSchema), async (req, res) => {
   try {
-    const { email, password, firstName, lastName, mobileNo } = signupSchema.parse(req.body)
+    const { email, password, firstName, lastName, mobileNo } = req.body
 
     // Create Fineract client
     const clientResponse = await fetch(
@@ -155,9 +167,9 @@ app.post("/api/auth/signup", async (req, res) => {
   }
 })
 
-app.post("/api/auth/login", async (req, res) => {
+app.post("/api/auth/login", authLimiter, csrfProtection, validateRequest(loginSchema), async (req, res) => {
   try {
-    const { email, password } = loginSchema.parse(req.body)
+    const { email, password } = req.body
 
     const fineractUser = await fineractService.login(email, password)
 
@@ -295,10 +307,7 @@ app.get("/api/health", async (req, res) => {
 })
 
 // Error handling
-app.use((err, req, res, next) => {
-  console.error(err)
-  res.status(500).json({ error: "Internal server error" })
-})
+app.use(errorHandler)
 
 const PORT = process.env.PORT || 3001
 if (process.env.NODE_ENV !== 'test') {
