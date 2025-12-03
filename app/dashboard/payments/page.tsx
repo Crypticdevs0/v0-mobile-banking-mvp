@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { CreditCard, ArrowLeft, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -119,40 +119,40 @@ export default function PaymentsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="max-w-lg mx-auto px-4 py-6 border-b border-border">
-        <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-background pb-20 sm:pb-24">
+      <div className="max-w-lg mx-auto px-3 sm:px-4 py-4 sm:py-6 border-b border-border">
+        <div className="flex items-center gap-3 sm:gap-4">
           <Link href="/dashboard">
-            <ArrowLeft className="w-6 h-6 text-foreground cursor-pointer hover:opacity-70" />
+            <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-foreground cursor-pointer hover:opacity-70" />
           </Link>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <CreditCard className="w-6 h-6" /> Bill Pay
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
+            <CreditCard className="w-5 h-5 sm:w-6 sm:h-6" /> Bill Pay
           </h1>
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto px-4 py-8">
+      <div className="max-w-lg mx-auto px-3 sm:px-4 py-4 sm:py-8">
         <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
           <Tabs defaultValue="scheduled" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="scheduled">Scheduled</TabsTrigger>
-              <TabsTrigger value="history">History</TabsTrigger>
-              <TabsTrigger value="billers">Billers</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-3 h-auto">
+              <TabsTrigger value="scheduled" className="text-xs sm:text-sm py-2">Scheduled</TabsTrigger>
+              <TabsTrigger value="history" className="text-xs sm:text-sm py-2">History</TabsTrigger>
+              <TabsTrigger value="billers" className="text-xs sm:text-sm py-2">Billers</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="scheduled" className="space-y-4 mt-6">
+            <TabsContent value="scheduled" className="space-y-3 sm:space-y-4 mt-4 sm:mt-6">
               {billers.length > 0 ? (
                 billers.map((biller) => (
                   <motion.div
                     key={biller.id}
                     variants={itemVariants}
-                    className="card p-4 hover:shadow-md transition cursor-pointer"
+                    className="card p-3 sm:p-4 hover:shadow-md transition cursor-pointer"
                     onClick={() => setSelectedBiller(biller)}
                   >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <p className="font-bold text-foreground">{biller.name}</p>
-                        <p className="text-sm text-foreground-secondary">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-foreground text-sm sm:text-base truncate">{biller.name}</p>
+                        <p className="text-xs sm:text-sm text-foreground-secondary truncate">
                           A/C: {biller.accountNumber}
                         </p>
                       </div>
@@ -160,27 +160,27 @@ export default function PaymentsPage() {
                   </motion.div>
                 ))
               ) : (
-                <motion.div variants={itemVariants} className="text-center py-8 text-foreground-secondary">
-                  <p>No scheduled payments.</p>
+                <motion.div variants={itemVariants} className="text-center py-6 sm:py-8 text-foreground-secondary">
+                  <p className="text-sm sm:text-base">No scheduled payments.</p>
                 </motion.div>
               )}
             </TabsContent>
 
-            <TabsContent value="history" className="space-y-4 mt-6">
-              <motion.div variants={itemVariants} className="text-center py-8 text-foreground-secondary">
-                <p>No payment history.</p>
+            <TabsContent value="history" className="space-y-4 mt-4 sm:mt-6">
+              <motion.div variants={itemVariants} className="text-center py-6 sm:py-8 text-foreground-secondary">
+                <p className="text-sm sm:text-base">No payment history.</p>
               </motion.div>
             </TabsContent>
 
-            <TabsContent value="billers" className="space-y-4 mt-6">
+            <TabsContent value="billers" className="space-y-3 sm:space-y-4 mt-4 sm:mt-6">
               {billers.map((biller) => (
-                <motion.div key={biller.id} variants={itemVariants} className="card p-4">
-                  <p className="font-bold text-foreground">{biller.name}</p>
-                  <p className="text-sm text-foreground-secondary">{biller.accountNumber}</p>
+                <motion.div key={biller.id} variants={itemVariants} className="card p-3 sm:p-4">
+                  <p className="font-bold text-foreground text-sm sm:text-base truncate">{biller.name}</p>
+                  <p className="text-xs sm:text-sm text-foreground-secondary truncate">{biller.accountNumber}</p>
                 </motion.div>
               ))}
               <motion.div variants={itemVariants}>
-                <Button onClick={() => setShowAddBiller(true)} variant="outline" className="w-full">
+                <Button onClick={() => setShowAddBiller(true)} variant="outline" className="w-full text-xs sm:text-sm">
                   <Plus className="w-4 h-4 mr-2" /> Add Biller
                 </Button>
               </motion.div>
@@ -188,26 +188,26 @@ export default function PaymentsPage() {
           </Tabs>
 
           {selectedBiller && (
-            <motion.div variants={itemVariants} className="card p-6 mt-6">
-              <h3 className="font-bold text-foreground mb-4">Pay {selectedBiller.name}</h3>
+            <motion.div variants={itemVariants} className="card p-4 sm:p-6 mt-4 sm:mt-6">
+              <h3 className="font-bold text-foreground mb-3 sm:mb-4 text-sm sm:text-base">Pay {selectedBiller.name}</h3>
               <Input
                 type="number"
                 value={paymentAmount}
                 onChange={(e) => setPaymentAmount(e.target.value)}
                 placeholder="Amount"
-                className="mb-4"
+                className="mb-3 sm:mb-4 text-sm"
               />
               <Input
                 type="date"
                 value={paymentDate}
                 onChange={(e) => setPaymentDate(e.target.value)}
-                className="mb-4"
+                className="mb-3 sm:mb-4 text-sm"
               />
-              <div className="flex gap-3">
-                <Button variant="outline" onClick={() => setSelectedBiller(null)} className="flex-1">
+              <div className="flex gap-2 sm:gap-3">
+                <Button variant="outline" onClick={() => setSelectedBiller(null)} className="flex-1 text-xs sm:text-sm">
                   Cancel
                 </Button>
-                <Button onClick={handleSchedulePayment} disabled={loading} className="flex-1 bg-primary hover:bg-primary-dark">
+                <Button onClick={handleSchedulePayment} disabled={loading} className="flex-1 bg-primary hover:bg-primary-dark text-xs sm:text-sm">
                   {loading ? "Scheduling..." : "Schedule Payment"}
                 </Button>
               </div>
@@ -215,25 +215,25 @@ export default function PaymentsPage() {
           )}
 
           {showAddBiller && (
-            <motion.div variants={itemVariants} className="card p-6 mt-6">
-              <h3 className="font-bold text-foreground mb-4">Add New Biller</h3>
+            <motion.div variants={itemVariants} className="card p-4 sm:p-6 mt-4 sm:mt-6">
+              <h3 className="font-bold text-foreground mb-3 sm:mb-4 text-sm sm:text-base">Add New Biller</h3>
               <Input
                 value={newBillerName}
                 onChange={(e) => setNewBillerName(e.target.value)}
                 placeholder="Biller Name"
-                className="mb-4"
+                className="mb-3 sm:mb-4 text-sm"
               />
               <Input
                 value={newBillerAccountNumber}
                 onChange={(e) => setNewBillerAccountNumber(e.target.value)}
                 placeholder="Account Number"
-                className="mb-4"
+                className="mb-3 sm:mb-4 text-sm"
               />
-              <div className="flex gap-3">
-                <Button variant="outline" onClick={() => setShowAddBiller(false)} className="flex-1">
+              <div className="flex gap-2 sm:gap-3">
+                <Button variant="outline" onClick={() => setShowAddBiller(false)} className="flex-1 text-xs sm:text-sm">
                   Cancel
                 </Button>
-                <Button onClick={handleAddBiller} disabled={loading} className="flex-1 bg-primary hover:bg-primary-dark">
+                <Button onClick={handleAddBiller} disabled={loading} className="flex-1 bg-primary hover:bg-primary-dark text-xs sm:text-sm">
                   {loading ? "Adding..." : "Add Biller"}
                 </Button>
               </div>

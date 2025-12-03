@@ -8,10 +8,10 @@ import jwt from "jsonwebtoken"
 import { fineractService } from "./services/fineractService.js"
 import { SocketService } from "./services/socketService.js"
 import { z } from "zod"
-import { requestLogger, errorHandler } from "./middleware/logger.ts"
-import { authLimiter, apiLimiter, transferLimiter } from "./middleware/rateLimit.ts"
-import { validateRequest, signupSchema, loginSchema, transferSchema } from "./middleware/validation.ts"
-import { csrfProtection, csrfTokenEndpoint } from "./middleware/csrf.ts"
+import { requestLogger, errorHandler } from "./middleware/logger.js"
+import { authLimiter, apiLimiter, transferLimiter, otpLimiter, signupLimiter } from "./middleware/rateLimit.js"
+import { validateRequest, signupSchema, loginSchema, transferSchema, depositSchema } from "./middleware/validation.js"
+import { csrfProtection, csrfTokenEndpoint } from "./middleware/csrf.js"
 
 const app = express()
 import routes from "./routes/index.js"
@@ -34,6 +34,12 @@ if (missingEnvVars.length > 0) {
   process.exit(1)
 }
 const httpServer = createServer(app)
+
+// Validate CLIENT_URL is set
+if (!process.env.CLIENT_URL) {
+  console.warn("⚠️ CLIENT_URL not set, defaulting to http://localhost:3000 for development only")
+}
+
 const io = new Server(httpServer, {
   cors: {
     origin: process.env.CLIENT_URL || "http://localhost:3000",
@@ -74,12 +80,12 @@ app.use(requestLogger)
 // Mount backend routers
 // app.use('/api/otp', otpRouter)
 
-import { verifyToken } from "./middleware/auth.ts"
+import { verifyToken } from "./middleware/auth.js"
 
 // CSRF token endpoint
 app.get("/api/csrf-token", csrfTokenEndpoint)
 
-app.post("/api/auth/signup", authLimiter, csrfProtection, validateRequest(signupSchema), async (req, res) => {
+app.post("/api/auth/signup", signupLimiter, csrfProtection, validateRequest(signupSchema), async (req, res) => {
   try {
     const { email, password, firstName, lastName, mobileNo } = req.body
 
@@ -228,12 +234,10 @@ app.get("/api/accounts/:accountId", verifyToken, async (req, res) => {
 })
 
 import transactionsRouter from './routes/transactions.js'
+import transfersRouter from './routes/transfers.js'
+
 app.use('/api/transactions', verifyToken, transactionsRouter)
-if (process.env.NODE_ENV !== "test") {
-  import("./routes/transfers.ts").then(transfersRouter => {
-    app.use('/api/transfers', transfersRouter.default)
-  })
-}
+app.use('/api/transfers', verifyToken, transfersRouter)
 
 // ===== Socket.io Events =====
 io.on("connection", (socket) => {
@@ -280,27 +284,46 @@ io.on("connection", (socket) => {
 
 app.get("/api/health", async (req, res) => {
   try {
+    const startTime = Date.now()
+    const checks = {
+      api: "healthy",
+      fineract: "unknown",
+      socketio: "unknown",
+      memory: process.memoryUsage(),
+      uptime: process.uptime(),
+    }
+
     // Test Fineract connectivity
-    const fineractHealth = await fetch(`${process.env.FINERACT_URL}/fineract-provider/api/v1/health`, {
-      headers: {
-        Authorization: `Basic ${Buffer.from(`${process.env.FINERACT_USERNAME}:${process.env.FINERACT_PASSWORD}`).toString("base64")}`,
-      },
-    })
-      .then((r) => r.ok)
-      .catch(() => false)
+    try {
+      const fineractResponse = await Promise.race([
+        fetch(`${process.env.FINERACT_URL}/fineract-provider/api/v1/health`, {
+          headers: {
+            Authorization: `Basic ${Buffer.from(`${process.env.FINERACT_USERNAME}:${process.env.FINERACT_PASSWORD}`).toString("base64")}`,
+          },
+        }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 5000)),
+      ])
+      checks.fineract = fineractResponse.ok ? "healthy" : "degraded"
+    } catch (error) {
+      checks.fineract = "unhealthy"
+    }
+
+    // Check Socket.io
+    checks.socketio = io.engine.clientsCount >= 0 ? "healthy" : "unhealthy"
+
+    const responseTime = Date.now() - startTime
+    const overallStatus = checks.fineract === "healthy" && checks.socketio === "healthy" ? "ok" : "degraded"
 
     res.json({
-      status: "ok",
-      timestamp: new Date(),
-      services: {
-        api: "healthy",
-        fineract: fineractHealth ? "healthy" : "degraded",
-        socketio: io.engine.clientsCount >= 0 ? "healthy" : "down",
-      },
+      status: overallStatus,
+      timestamp: new Date().toISOString(),
+      responseTime: `${responseTime}ms`,
+      services: checks,
     })
   } catch (error) {
     res.status(503).json({
       status: "error",
+      timestamp: new Date().toISOString(),
       error: error.message,
     })
   }
@@ -318,4 +341,4 @@ if (process.env.NODE_ENV !== 'test') {
   })
 }
 
-export { app }
+export { app, httpServer, io }

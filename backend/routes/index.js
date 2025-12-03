@@ -1,10 +1,9 @@
 import express from "express"
+import otpRouter from "./otpAuth.js"
+
 const router = express.Router()
 
-if (process.env.NODE_ENV !== "test") {
-  import("./otpAuth.ts").then(otpRouter => {
-    router.use("/otp", otpRouter.default)
-  })
-}
+// Mount OTP routes
+router.use("/otp", otpRouter)
 
 export default router

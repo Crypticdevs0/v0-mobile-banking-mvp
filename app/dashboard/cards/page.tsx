@@ -34,24 +34,24 @@ export default function CardsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="max-w-lg mx-auto px-4 py-6 border-b border-border">
-        <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-background pb-20 sm:pb-24">
+      <div className="max-w-lg mx-auto px-3 sm:px-4 py-4 sm:py-6 border-b border-border">
+        <div className="flex items-center gap-3 sm:gap-4">
           <Link href="/dashboard">
-            <ArrowLeft className="w-6 h-6 text-foreground cursor-pointer hover:opacity-70" />
+            <ArrowLeft className="w-5 h-5 sm:w-6 sm:h-6 text-foreground cursor-pointer hover:opacity-70" />
           </Link>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <CreditCard className="w-6 h-6" /> Virtual Card
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
+            <CreditCard className="w-5 h-5 sm:w-6 sm:h-6" /> Virtual Card
           </h1>
         </div>
       </div>
 
-      <div className="max-w-lg mx-auto px-4 py-8">
-        <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
+      <div className="max-w-lg mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-4 sm:space-y-6">
           {/* Card Display */}
           <motion.div
             variants={itemVariants}
-            className="relative h-56 bg-gradient-to-br from-blue-600 to-teal-500 rounded-2xl p-6 text-white shadow-2xl overflow-hidden"
+            className="relative h-48 sm:h-56 bg-gradient-to-br from-blue-600 to-teal-500 rounded-2xl p-4 sm:p-6 text-white shadow-2xl overflow-hidden"
           >
             <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20" />
             <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full -ml-16 -mb-16" />
@@ -91,47 +91,47 @@ export default function CardsPage() {
 
           {/* Card Details */}
           {showCardNumber && (
-            <motion.div variants={itemVariants} className="card p-6 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
+            <motion.div variants={itemVariants} className="card p-4 sm:p-6 space-y-3 sm:space-y-4">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex-1 min-w-0">
                   <p className="text-xs text-foreground-secondary">Card Number</p>
-                  <p className="font-mono font-bold text-foreground">{virtualCard.number}</p>
+                  <p className="font-mono font-bold text-foreground text-xs sm:text-sm truncate">{virtualCard.number}</p>
                 </div>
                 <button
                   onClick={() => copyToClipboard(virtualCard.number.replace(/\s/g, ""))}
-                  className="text-primary hover:opacity-70"
+                  className="text-primary hover:opacity-70 flex-shrink-0"
                 >
-                  <Copy className="w-5 h-5" />
+                  <Copy className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-2 sm:gap-4">
                 <div>
                   <p className="text-xs text-foreground-secondary">Expiry</p>
-                  <p className="font-mono font-bold text-foreground">{virtualCard.expiry}</p>
+                  <p className="font-mono font-bold text-foreground text-xs sm:text-sm">{virtualCard.expiry}</p>
                 </div>
                 <div>
                   <p className="text-xs text-foreground-secondary">CVV</p>
-                  <p className="font-mono font-bold text-foreground">{virtualCard.cvv}</p>
+                  <p className="font-mono font-bold text-foreground text-xs sm:text-sm">{virtualCard.cvv}</p>
                 </div>
               </div>
 
-              {copied && <p className="text-sm text-green-600">Copied to clipboard!</p>}
+              {copied && <p className="text-xs sm:text-sm text-green-600">Copied to clipboard!</p>}
             </motion.div>
           )}
 
           {/* Card Actions */}
-          <motion.div variants={itemVariants} className="flex gap-3">
-            <Button variant="outline" className="flex-1 bg-transparent">
+          <motion.div variants={itemVariants} className="flex gap-2 sm:gap-3">
+            <Button variant="outline" className="flex-1 bg-transparent text-xs sm:text-sm">
               Freeze Card
             </Button>
-            <Button className="flex-1 bg-primary hover:bg-primary-dark">Settings</Button>
+            <Button className="flex-1 bg-primary hover:bg-primary-dark text-xs sm:text-sm">Settings</Button>
           </motion.div>
 
           {/* Card Information */}
-          <motion.div variants={itemVariants} className="card p-6">
-            <h3 className="font-bold text-foreground mb-4">About Virtual Card</h3>
-            <ul className="space-y-2 text-sm text-foreground-secondary">
+          <motion.div variants={itemVariants} className="card p-4 sm:p-6">
+            <h3 className="font-bold text-foreground mb-3 sm:mb-4 text-sm sm:text-base">About Virtual Card</h3>
+            <ul className="space-y-2 text-xs sm:text-sm text-foreground-secondary">
               <li>✓ Accepted everywhere Visa is accepted</li>
               <li>✓ Unique number for each purchase</li>
               <li>✓ Cashback on eligible purchases</li>
